@@ -8,6 +8,8 @@ It's integrated with [immunefi-terminal](https://github.com/shortdoom/immunefi-t
 
 `chmod +x setup.sh`
 
+`./setup.sh`
+
 then
 
 `python run.py` (from your newly created `venv`)
@@ -17,6 +19,8 @@ If you want to set it up manually, just inspect the `setup.sh` and follow the in
 Betterscan Dashboard is running on: `127.0.0.1:5000`
 
 Datasette Dashboard is running on `127.0.0.1:8001`
+
+It's a Python app! VanillaJS + AceEditor are stored inside of the repository, you do not need to run npm! The ugly side effect is github suggesting that's a Javascript app.
 
 # Features
 
