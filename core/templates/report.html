@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <link rel="stylesheet" href="/static/default.min.css" />
+    <script src="/static/js/highlight.min.js"></script>
+    <script
+      type="text/javascript"
+      src="/static/js/editor/ace.js"
+      charset="utf-8"
+    ></script>
+    <script type="text/javascript" src="/static/js/solidity.min.js"></script>
+    <script type="text/javascript" src="/static/js/yul.min.js"></script>
+    <script type="text/javascript">
+      hljs.highlightAll();
+    </script>
+  </head>
+  <body>
+    <div class="header" onclick="window.location.href='/'">
+      <h1>┗┫⦀⦙ｂｅｔｔｅｒｓｃａｎ⦙⦀┣┛</h1>
+    </div>
+    <div id="dashboard">
+      <div id="menuGroup">
+        <button onclick="window.location.href='/'">Full View</button>
+        <button onclick="window.location.href='/report'">Report</button>
+      </div>
+
+      <h1>UNDER CONSTRUCTION :)</h1>
+
+      <div id="scanResultsSection">
+        <h3>Detectors</h3>
+        <div class="toggleScanResults">
+          <form id="scanResultFilterForm">
+            <label>Impact:</label>
+            <select name="impact" id="impactSelect">
+              <option value="">All</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+              <option value="Informational">Informational</option>
+              <option value="ERROR">Error-semgrep</option>
+              <option value="WARNING">Warning-semgrep</option>
+              <option value="INFO">Info-semgrep</option>
+            </select>
+            <label>Check:</label>
+            <select name="check_scanned" id="checkSelect">
+              <option value="">All</option>
+            </select>
+
+            <label>Function:</label>
+            <select name="function_scanned" id="functionSelect">
+              <option value="">All</option>
+            </select>
+
+            <label>Contract:</label>
+            <select name="contract_scanned" id="contractSelect">
+              <option value="">All</option>
+            </select>
+            <button type="button" onclick="filterScanResults()">Filter</button>
+          </form>
+          <button onclick="toggleScanResultsDisplay()">X</button>
+        </div>
+        <div id="scanResultsDisplay"></div>
+      </div>
+    </div>
+    <script>
+      function filterScanResults() {
+        var form = document.getElementById("scanResultFilterForm");
+        var formData = new FormData(form);
+        var searchCriteria = Object.fromEntries(formData.entries());
+
+        const urlParams = new URLSearchParams(window.location.search);
+        let session_path = urlParams.get("session_id");
+        var sessionData = getSessionData(session_path);
+
+        fetch("/filter_scan", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ searchCriteria, sessionData }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            displayScanResultsSection(data);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      }
+
+      function displayScanResultsSection(scanResults) {
+        const scanResultsSection =
+          document.getElementById("scanResultsSection");
+        const scanResultsDisplay =
+          document.getElementById("scanResultsDisplay");
+
+        scanResultsSection.style.display = "block";
+
+        if (!scanResults || scanResults.length === 0) {
+          scanResultsDisplay.innerHTML =
+            "<div>No detector data available</div>";
+          return;
+        }
+
+        let content = `<div id="scanResultsContainer" style="display: block;">`;
+
+        // Loop through each scan result to create its detailed view
+        scanResults.forEach((item) => {
+          content += `<div style="margin-bottom: 5px; padding-bottom: 5px;">`;
+          Object.keys(item).forEach((propKey) => {
+            content += `<div><strong>${propKey}:</strong> ${item[propKey]}</div>`;
+          });
+          content += `</div>`;
+        });
+
+        content += "</div>";
+        scanResultsDisplay.innerHTML = content;
+
+        // Ensure the scan results section is visible
+        scanResultsSection.style.display = "block";
+      }
+
+      function populateScanDropdown(dropdownId, dataKey) {
+        const urlParams = new URLSearchParams(window.location.search);
+        let session_path = urlParams.get("session_id");
+        var sessionData = getSessionData(session_path);
+        var dropdown = document.getElementById(dropdownId);
+        dropdown.innerHTML = '<option value="">All</option>';
+
+        const uniqueValues = Array.from(
+          new Set(sessionData.scan_results.map((item) => item[dataKey]))
+        ).sort(); // Sorting for better usability
+
+        // Populate the dropdown with options
+        uniqueValues.forEach((value) => {
+          const option = new Option(value, value);
+          dropdown.add(option);
+        });
+      }
+
+      function initScanDropdowns() {
+        populateScanDropdown("checkSelect", "check");
+        populateScanDropdown("functionSelect", "full_name");
+        populateScanDropdown("contractSelect", "contract");
+      }
+
+      function toggleScanResultsDisplay() {
+        const container = document.getElementById("scanResultsContainer");
+        container.style.display =
+          container.style.display === "none" ? "block" : "none";
+      }
+
+      function getActiveSession() {
+        let url = new URL(window.location.href);
+        return url.searchParams.get("session_id");
+      }
+
+      function getSessionData(session_path) {
+        return JSON.parse(localStorage.getItem(session_path));
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        // Extract session ID from URL
+        initScanDropdowns();
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get("session_id");
+        console.log("sessionId", sessionId);
+        const sessionData = JSON.parse(localStorage.getItem(sessionId));
+      });
+    </script>
+  </body>
+</html>

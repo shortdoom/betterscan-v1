@@ -1,0 +1,3 @@
+[submodule "immunefi-terminal"]
+	path = immunefi-terminal
+	url = https://github.com/shortdoom/immunefi-terminal.git

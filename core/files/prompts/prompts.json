@@ -1,0 +1,84 @@
+[
+    {
+        "name": "open_ended_0.1_unguided",
+        "response_name": "open_ended_0.1_unguided_response",
+        "prompt_template": "You are a smart contract auditor, identify and explain severe vulnerabilities in the provided smart contract. Make sure that they are exploitable in real world and beneficial to attackers. Provide each identified vulnerability with intermediate reasoning and its associated function. You should mimic answering in the background five times and provide me with the most frequently appearing answer. Make your reasoning comprehensive and detailed.\n\nSolidity code to audit:\n\n$MAIN_FUNCTION\n\n$INTERNAL_FUNCTIONS\n\n$EXTERNAL_FUNCTIONS\n\nPlease strictly adhere to the output format specified; DO NOT explain your answer outside of json output. Output only json file according to the format specified.\n\n{\n    \"output_list\": [\n        {\n            \"function_name\": \"<function_name_1>\",\n            \"vulnerable_line\": \"<copied_vulnerable_line1>\",\n            \"vulnerability\": \"<short_vulnera_desc_1>\",\n            \"reason\": \"<reason_1>\"\n        },\n        {\n            \"function_name\": \"<function_name_2>\",\n            \"vulnerable_line\": \"<copied_vulnerable_line2>\",\n            \"vulnerability\": \"<short_vulnera_desc_2>\",\n            \"reason\": \"<reason_2>\"\n        }\n    ]\n}",
+        "extra_data": [
+            {}
+        ]
+    },
+    {
+        "name": "your_custom_prompt_1337",
+        "response_name": "no_response_or_create_response",
+        "prompt_template": "Edit your own prompts in files/prompts/prompts.json file",
+        "extra_data": [
+            {}
+        ]
+    },
+    {
+        "name": "open_ended_0.1_guided",
+        "response_name": "open_ended_0.1_guided_response",
+        "prompt_template": "You are a smart contract auditor, identify and explain severe vulnerabilities in the provided smart contract. Make sure that they are exploitable in real world and beneficial to attackers. Provide each identified vulnerability with intermediate reasoning and its associated function. You should mimic answering in the background five times and provide me with the most frequently appearing answer. Make your reasoning comprehensive and detailed.\n\nLook for functional bugs like or similar too:\n\n$INDEX:$PROMPT\n... and others you can yourself think of that would allow you to exploit the following Solidity code:\n\n$MAIN_FUNCTION\n\n$INTERNAL_FUNCTIONS\n\n$EXTERNAL_FUNCTIONS\n\nPlease strictly adhere to the output format specified; DO NOT explain your answer outside of json output. Output only json file according to the format specified.\n\n{\n    \"output_list\": [\n        {\n            \"function_name\": \"<function_name_1>\",\n            \"vulnerable_line\": \"<copied_vulnerable_line1>\",\n            \"vulnerability\": \"<short_vulnera_desc_1>\",\n            \"reason\": \"<reason_1>\"\n        },\n        {\n            \"function_name\": \"<function_name_2>\",\n            \"vulnerable_line\": \"<copied_vulnerable_line2>\",\n            \"vulnerability\": \"<short_vulnera_desc_2>\",\n            \"reason\": \"<reason_2>\"\n        }\n    ]\n}",
+        "extra_data": [
+            {
+                "0": " if inconsistent access control checks in sensitive functions pose a security risk,",
+                "1": " functions with incorrect visibility settings that could allow unauthorized access,",
+                "2": " vulnerabilities due to unauthenticated changes in access control settings,",
+                "3": " missing access control in functions where it is crucial for security,",
+                "4": " how extreme input values affect the logic flow in the contract, leading to vulnerabilities,",
+                "5": " vulnerabilities in functions that do not follow the multiply before divide principle,",
+                "6": " arithmetic operations vulnerable to integer overflow and underflow,",
+                "7": " functions that do not handle edge cases for zero or extremely large numerical inputs,",
+                "8": " risks associated with floating-point precision errors due to lack of fixed-point arithmetic,",
+                "9": " division operations that lack checks against division by zero,",
+                "10": " inaccuracies in percentage calculations due to precision loss,",
+                "11": " vulnerabilities caused by array accesses outside of bounds,",
+                "12": " issues in dynamic array element deletion by swapping with the last element,",
+                "13": " space reclamation and size adjustment issues when using delete in dynamic arrays,",
+                "14": " nested loops with premature exit statements disrupting data addition,",
+                "15": " off-by-one errors, especially with boundary checks,",
+                "16": " loop termination conditions that could lead to off-by-one errors,",
+                "17": " logic errors due to incorrect initialization and incrementation of counters in loops,",
+                "18": " logic errors in updating and accessing values in loops,",
+                "19": " vulnerabilities in calculations against external contracts manipulation,",
+                "20": " rounding errors in mathematical operations due to fixed precision of Solidity,",
+                "21": " mathematical operations returning values outside the expected range,",
+                "22": " precision loss in compound arithmetic operations like a*b/c,",
+                "23": " rounding errors in calculations involving token amounts,",
+                "24": " unexpected results in mathematical operations influenced by user-controlled variables,",
+                "25": " edge case handling issues in calculations involving time or block numbers,",
+                "26": " functional asymmetry in implemented functions like deposit/withdraw or mint/burn,",
+                "27": " discrepancies in function outputs when called with different input distributions,",
+                "28": " misuse of logical operators leading to off-by-one errors,",
+                "29": " unintended side-effects in expressions used in logical/comparison operators,",
+                "30": " manipulations in returned data from external contract calls,",
+                "31": " business logic manipulations by arbitrary input values,",
+                "32": " vulnerabilities allowing to bypass or reorder smart contract business logic flows,",
+                "33": " complexity and clarity issues in modifier logic, avoiding untrusted external calls,",
+                "34": " off-by-one errors in boundary cases in loops and if-statements,",
+                "35": " vulnerabilities due to inadequate validation of function inputs,",
+                "36": " unhandled edge cases in conditional statements leading to logic bypass,",
+                "37": " critical logic decisions improperly influenced by user input,",
+                "38": " off-by-one errors in array indexes and loop bounds,",
+                "39": " logic manipulation due to improper handling of external data,",
+                "40": " conditional checks relying on assumptions about external contract states,",
+                "41": " integrity issues in all return paths of a function,",
+                "42": " unintended side effects or bypassed checks in complex logical expressions,",
+                "43": " inconsistencies in contract state changes with business logic,",
+                "44": " unexpected behavior in functions receiving extreme or boundary input values,",
+                "45": " vulnerabilities in fallback functions to logic manipulation or unexpected behavior,",
+                "46": " the absence of reentrancy guards in functions to prevent recursive calls,",
+                "47": " vulnerabilities in state changes before external calls to prevent reentrancy attacks,",
+                "48": " the lack of mutexes or equivalent mechanisms to prevent reentrancy in external call functions,"
+            }
+        ]
+    },
+    {
+        "name": "open_ended_0.1_unguided_response",
+        "response_name": "open_ended_0.1_unguided_response",
+        "prompt_template": "Below vulnerabilities and reasoning are likely contain mistakes. As a harsh vulnerability critic, your duty is to scrutinize the function and evaluate the correctness, severity and profitability of given vulnerabilities and associated reasoning with corresponding scores ranging from 0 (lowest) to 9 (highest). Your also need to provide criticism, which must include explanations for your scoring. Make your criticism comprehensive and detailed. Below are three examples\n\n$ANALYSIS\n\nPlease strictly adhere to the output format specified; DO NOT explain your answer outside of json output. Output only json file according to the format specified.\n\n{\n    \"output_list\": [\n        {\n            \"function_name\": \"<function_name_1>\",\n            \"vulnerability\": \"<short_vulnera_desc_1>\",\n            \"criticism\": \"<criticism for reasoning and explanation for scoring>\",\n            \"correctness\": <0~9>,\n            \"severity\": <0~9>,\n            \"profitability\": <0~9>,\n        },\n        {\n            \"function_name\": \"<function_name_2>\",\n            \"vulnerability\": \"<short_vulnera_desc_2>\",\n            \"criticism\": \"<criticism for reasoning and explanation for scoring>\",\n            \"correctness\": <0~9>,\n            \"severity\": <0~9>,\n            \"profitability\": <0~9>,\n        }\n    ]\n}",
+        "extra_data": [
+            {}
+        ]
+    }
+]
