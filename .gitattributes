@@ -1,0 +1,5 @@
+# Exclude AceEditor library
+core/static/js/editor/* linguist-vendored=true
+
+# Exclude image files
+docs/* linguist-documentation=true
