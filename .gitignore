@@ -9,3 +9,4 @@ datasette/*.csv
 __pycache__
 .vscode
 *.db
+*.csv
