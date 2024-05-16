@@ -308,11 +308,12 @@
 
       // ############################### APP_NAVIGATION
 
-      // function getSessionData(session_path) {
-      // return JSON.parse(localStorage.getItem(session_path));
-      // }
+      function getSessionData(session_path) {
+        return JSON.parse(localStorage.getItem(session_path));
+      }
 
-      function getSessionData(sessionPath) {
+      function fetchSessionData(sessionPath) {
+        console.log("fetchSessionData -> sessionPath:", sessionPath);
         return fetch(
           `/get_session_data?path=${encodeURIComponent(sessionPath)}`
         )
@@ -326,7 +327,12 @@
             return response.json();
           })
           .then((sessionData) => {
-            return sessionData; // No need to parse again since response.json() already does that
+            if (sessionData) {
+              localStorage.setItem(sessionPath, JSON.stringify(sessionData));
+              return 200;
+            } else {
+              return null;
+            }
           })
           .catch((error) => {
             console.error(`Error fetching session data: ${error}`);
@@ -345,21 +351,6 @@
         }
       }
 
-      // session_path is a contract_data.data_path
-      // function jumpToSession(session_path) {
-      //   if (session_path && localStorage.getItem(sessionKey)) {
-      //     window.history.pushState(
-      //       sessionKey,
-      //       "",
-      //       `/?session_id=${sessionKey}`
-      //     );
-      //     initializeLoadData(sessionKey);
-      //   } else {
-      //     alert("Session key is invalid or does not exist.");
-      //   }
-      // }
-
-      // session_path is a contract_data.data_path
       function jumpToSession(session_path) {
         window.history.pushState(
           session_path,
@@ -403,13 +394,6 @@
         defaultOption.text = "Select a session";
         select.appendChild(defaultOption);
 
-        // Object.keys(localStorage).forEach(function (key) {
-        //   var option = document.createElement("option");
-        //   option.value = key;
-        //   option.text = key;
-        //   select.appendChild(option);
-        // });
-
         fetch("/list_sessions")
           .then((response) => {
             if (!response.ok) {
@@ -421,9 +405,10 @@
           })
           .then((directories) => {
             console.log("directories", directories);
-            directories.forEach(function (directory) {
+            Object.entries(directories).forEach(([directory]) => {
               var option = document.createElement("option");
-              option.value = directory;
+              var parts = directory.split(":");
+              option.value = parts.slice(0, 2).join(":");
               option.text = directory;
               select.appendChild(option);
             });
@@ -445,7 +430,6 @@
         if (sessionID) {
           const sessionData = JSON.parse(localStorage.getItem(sessionID));
           if (sessionData) {
-            // Initialize page with sessionData...
             hljs.highlightAll();
             displayScanResultsSection(sessionData.scan_results);
             initScanDropdowns();
@@ -463,34 +447,42 @@
             document.getElementById("homepage").style.display = "none";
           } else {
             console.log("Session data not found for ID:", sessionID);
-            // Optionally handle the case where session data is not found
+            initializeFileData(path);
           }
         }
       }
 
       // input is mainet:0x113377
       function initializeLoadData(path) {
-        const sessionPath = JSON.parse(localStorage.getItem(path));
-        const sessionData = getSessionData(sessionPath);
-        if (sessionData) {
-          // Initialize page with sessionData...
+        const localData = JSON.parse(localStorage.getItem(path));
+        if (localData) {
           hljs.highlightAll();
-          displayScanResultsSection(sessionData.scan_results);
+          displayScanResultsSection(localData.scan_results);
           initScanDropdowns();
           document.getElementById("functionDisplay").innerHTML =
-            createFunctionDataView(sessionData.functions_data);
+            createFunctionDataView(localData.functions_data);
           document.getElementById("contractDisplay").innerHTML =
             createContractDataView(
-              sessionData.network_info,
-              sessionData.contract_data,
-              sessionData.variables_data
+              localData.network_info,
+              localData.contract_data,
+              localData.variables_data
             );
           document.getElementById("searchDisplay").style.display = "block";
           document.getElementById("criteriaDisplay").style.display = "block";
-          createSourceCodeView(sessionData.source_code);
+          createSourceCodeView(localData.source_code);
           document.getElementById("homepage").style.display = "none";
         } else {
           console.log("Session data not found for ID:", path);
+          initializeFileData(path);
+        }
+      }
+
+      async function initializeFileData(path) {
+        const success = await fetchSessionData(path);
+        if (success) {
+          initializeLoadData(path);
+        } else {
+          console.log("Local file data not found for ID:", path);
         }
       }
 
@@ -680,13 +672,16 @@
           }
         }
 
-        // NOTE: Clear localStorage, dropdown is broken
+        // localStorage is only used for single session storage
+        // otherwise send POST to download or retrive from local filesystem
+        // NOTE: Clearing localStorage should happen on switch to different session_id url
         if (localStorage.getItem(path)) {
           console.log("session_path", path);
           console.log("localStorage.getItem(path)", storedData);
           window.history.pushState(path, "", `/?session_id=${path}`);
           initializeLoadData(path);
         } else {
+          console.log("Rendering new path in loadData()", path);
           fetch("/", {
             method: "POST",
             headers: {
@@ -707,11 +702,8 @@
               return response.json();
             })
             .then((data) => {
-              // localStorage.setItem(path, JSON.stringify(data));
-
-              // mainet:0x1337, /home/user/Betterscan/core/files/out/mainet:0x1337:ContractName
-              localStorage.setItem(path, data.network_info.data_directory);
-              window.history.pushState(path, "", `/?session_id=${path}`); // Update URL
+              localStorage.setItem(path, JSON.stringify(data));
+              window.history.pushState(path, "", `/?session_id=${path}`);
 
               displayScanResultsSection(data.scan_results);
               initScanDropdowns();
@@ -1489,7 +1481,9 @@
         const urlParams = new URLSearchParams(window.location.search);
         let session_path = urlParams.get("session_id");
         /// mainet:0x1337 (no name, no path)
+        console.log("populateScanDropdown -> session_path", session_path);
         var sessionData = getSessionData(session_path); /// getSessionData doesn't retrive sessionData.json!!!
+        console.log("populateScanDropdown -> sessionData", sessionData);
         var dropdown = document.getElementById(dropdownId);
         dropdown.innerHTML = '<option value="">All</option>';
 

@@ -41,18 +41,21 @@ SUPPORTED_NETWORK = dict(
 
 def check_if_source_exists(path):
     """
-    Checks if a directory exists in the "files/out" directory and if a sessionData.json file exists in it.
-    Returns the path to the sessionData.json file if it exists, otherwise returns None.
+    Checks if a directory exists in the "files/out" directory that partially matches the provided path.
+    If a matching directory is found and contains a sessionData.json file, returns the path to the sessionData.json file.
+    Otherwise, returns None.
     """
     base_path = os.path.join(app_dir, "files", "out")
     for root, dirs, _ in os.walk(base_path):
-        for dir in dirs:
-            print("dir", dir)
-            if path in dir:
-                session_data_path = os.path.join(root, dir, "sessionData.json")
-                print("check_if_source_exists", session_data_path)
+        for dir_name in dirs:
+            if path in dir_name:
+                session_data_path = os.path.join(root, dir_name, "sessionData.json")
+
                 if os.path.isfile(session_data_path):
                     return session_data_path
+                else:
+                    print(f"sessionData.json not found in directory: {dir_name}")
+    print(f"No matching directory found for path: {path}")
     return None
 
 
@@ -65,6 +68,17 @@ def check_if_supported_network_in_url(path):
         if network_url in path:
             return True
     return False
+
+
+def _get_session_data(path):
+    """
+    Returns the session data from files/out/$network:address if it exists, otherwise returns None.
+    """
+    session_data_path = check_if_source_exists(path)
+    if session_data_path:
+        data = load_source(session_data_path)
+        return data
+    return None
 
 
 def get_target_from_url(path):
@@ -291,6 +305,11 @@ def index():
                 if status_code == 400:
                     return data, status_code
             elif path_type == "network_target":
+
+                existing_data = _get_session_data(path)
+                if existing_data:
+                    return jsonify(existing_data)
+
                 data, status_code = compile_from_network(path, param)
                 print("status_code", status_code)
                 if status_code == 400:
@@ -313,11 +332,8 @@ def index():
 @app.route("/get_session_data", methods=["GET"])
 def get_session_data():
     path = request.args.get("path")
-    print("path", path)
-    session_data_path = check_if_source_exists(path)
-    print("session_data_path", session_data_path)
-    if session_data_path:
-        data = load_source(session_data_path)
+    data = _get_session_data(path)
+    if data:
         return jsonify(data)
     else:
         return "Session data not found", 404
@@ -329,8 +345,12 @@ def list_sessions():
         base_path = os.path.join(app_dir, "files", "out")
         if not os.path.exists(base_path):
             return jsonify({"error": f"Directory {base_path} does not exist"}), 500
+
         directories = next(os.walk(base_path))[1]
-        return jsonify(directories)
+        result = {
+            directory: os.path.join(base_path, directory) for directory in directories
+        }
+        return jsonify(result)
     except Exception as e:
         print(f"Error listing sessions: {e}")
         return jsonify({"error": "Failed to list sessions", "details": str(e)}), 500
