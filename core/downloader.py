@@ -129,15 +129,15 @@ class DownloaderClass:
 
         ################################################################
 
-        contract_info = {
-            "ContractName": single_contract_name if single_dir_type else contract_name,
-            "Address": self.target_name.split(":")[1],
-            "Network": network,
-            "LastChecked": datetime.datetime.now().isoformat(),
-            "Output_Dir": str(self.output_dir),
-        }
+        # contract_info = {
+        #     "ContractName": single_contract_name if single_dir_type else contract_name,
+        #     "Address": self.target_name.split(":")[1],
+        #     "Network": network,
+        #     "LastChecked": datetime.datetime.now().isoformat(),
+        #     "Output_Dir": str(self.output_dir),
+        # }
 
-        self.contract_info = contract_info
+        # self.contract_info = contract_info
 
         shutil.rmtree(self.output_dir / "crytic-export")
         new_dir_name = f"{self.output_dir.parent}/{self.output_dir.name}:{single_contract_name if single_dir_type else contract_name}"
@@ -150,6 +150,16 @@ class DownloaderClass:
             self.output_dir / "crytic_compile.config.json",
             self.output_dir / "slither.config.json",
         )
+
+        contract_info = {
+            "contract_name": single_contract_name if single_dir_type else contract_name,
+            "contract_address": self.target_name.split(":")[1],
+            "contract_network": network,
+            "last_checked": datetime.datetime.now().isoformat(),
+            "data_directory": str(self.output_dir),
+        }
+
+        self.contract_info = contract_info
 
         # crytic_root_file is the absolute path of the target contract_name.sol file found in the current directory or its subdirectories
         try:

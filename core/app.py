@@ -34,17 +34,23 @@ SUPPORTED_NETWORK = {
     "polyzk:": "zkevm.polygonscan.com",
 }
 
-SUPPORTED_NETWORK = dict(sorted(SUPPORTED_NETWORK.items(), key=lambda item: -len(item[1])))
+SUPPORTED_NETWORK = dict(
+    sorted(SUPPORTED_NETWORK.items(), key=lambda item: -len(item[1]))
+)
+
 
 def check_if_source_exists(path):
     """
     Checks if a directory exists in the "files/out" directory and if a sessionData.json file exists in it.
     Returns the path to the sessionData.json file if it exists, otherwise returns None.
     """
-    for root, dirs, _ in os.walk("files/out"):
+    base_path = os.path.join(app_dir, "files", "out")
+    for root, dirs, _ in os.walk(base_path):
         for dir in dirs:
+            print("dir", dir)
             if path in dir:
                 session_data_path = os.path.join(root, dir, "sessionData.json")
+                print("check_if_source_exists", session_data_path)
                 if os.path.isfile(session_data_path):
                     return session_data_path
     return None
@@ -143,7 +149,7 @@ def compile_from_network(path, api_key=None):
 
     if not Web3.is_address(address):
         return f"Invalid Ethereum address: {address}", 400
-    
+
     session_data_path = check_if_source_exists(path)
 
     if session_data_path:
@@ -303,6 +309,33 @@ def index():
     else:
         return render_template("index.html")
 
+
+@app.route("/get_session_data", methods=["GET"])
+def get_session_data():
+    path = request.args.get("path")
+    print("path", path)
+    session_data_path = check_if_source_exists(path)
+    print("session_data_path", session_data_path)
+    if session_data_path:
+        data = load_source(session_data_path)
+        return jsonify(data)
+    else:
+        return "Session data not found", 404
+
+
+@app.route("/list_sessions")
+def list_sessions():
+    try:
+        base_path = os.path.join(app_dir, "files", "out")
+        if not os.path.exists(base_path):
+            return jsonify({"error": f"Directory {base_path} does not exist"}), 500
+        directories = next(os.walk(base_path))[1]
+        return jsonify(directories)
+    except Exception as e:
+        print(f"Error listing sessions: {e}")
+        return jsonify({"error": "Failed to list sessions", "details": str(e)}), 500
+
+
 @app.route("/report", methods=["GET", "POST"])
 def report():
     if request.method == "POST":
@@ -324,6 +357,7 @@ def report():
             return jsonify({"error": str(e)}), 400
     else:
         return render_template("report.html")
+
 
 @app.route("/prompt", methods=["POST"])
 def prompt():
