@@ -311,7 +311,7 @@ def index():
                     return jsonify(existing_data)
 
                 data, status_code = compile_from_network(path, param)
-                print("status_code", status_code)
+
                 if status_code == 400:
                     return data, status_code
             elif path_type == "dir_target":

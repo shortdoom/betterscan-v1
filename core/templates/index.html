@@ -47,8 +47,8 @@
           <input
             type="text"
             id="paramInput"
-            placeholder="API key or Contract Name"
-            style="background-color: #333333ad; color: #fff"
+            placeholder="Optional: API/ContractName"
+            style="color: #fff"
           />
           <button onclick="loadData()">Load</button>
         </div>
@@ -201,22 +201,22 @@
             </div>
 
             <div class="checkbox-group">
-              <label>Has Modifiers</label>
+              <label>Modifiers</label>
               <input type="checkbox" name="hasModifiers" value="true" />
 
-              <label>Has Internal Calls</label>
+              <label>Internal Calls</label>
               <input type="checkbox" name="hasInternalCalls" value="true" />
 
-              <label>Has External Calls</label>
+              <label>External Calls</label>
               <input type="checkbox" name="hasExternalCalls" value="true" />
 
-              <label>Is inherited</label>
+              <label>Inherited</label>
               <input type="checkbox" name="isInheritedFunction" value="true" />
 
-              <label>Contains ASM</label>
+              <label>ASM</label>
               <input type="checkbox" name="containsAsm" value="true" />
 
-              <label>Low-lvl call</label>
+              <label>Low-lvl-call</label>
               <input type="checkbox" name="lowLvlCall" value="true" />
             </div>
           </div>
@@ -341,14 +341,9 @@
       }
 
       function clearData() {
-        var dropdown = document.getElementById("keysDropdown");
-        var key = dropdown.value;
-
-        if (key && key !== "Select a key to clear") {
-          localStorage.removeItem(key);
-          alert("Data cleared successfully. F5 to see changes.");
-          poupulateSessionStorageDropdown();
-        }
+        localStorage.clear();
+        alert("All data cleared successfully. F5 to see changes.");
+        populateSessionStorageDropdown();
       }
 
       function jumpToSession(session_path) {
@@ -377,7 +372,7 @@
         jumpOption.text = "Jump To Session";
         var clearOption = document.createElement("option");
         clearOption.value = "clear";
-        clearOption.text = "Clear Data";
+        clearOption.text = "Clear Storage";
         actionSelect.appendChild(jumpOption);
         actionSelect.appendChild(clearOption);
 
@@ -452,7 +447,6 @@
         }
       }
 
-      // input is mainet:0x113377
       function initializeLoadData(path) {
         const localData = JSON.parse(localStorage.getItem(path));
         if (localData) {
@@ -674,10 +668,8 @@
 
         // localStorage is only used for single session storage
         // otherwise send POST to download or retrive from local filesystem
-        // NOTE: Clearing localStorage should happen on switch to different session_id url
         if (localStorage.getItem(path)) {
           console.log("session_path", path);
-          console.log("localStorage.getItem(path)", storedData);
           window.history.pushState(path, "", `/?session_id=${path}`);
           initializeLoadData(path);
         } else {

@@ -23,6 +23,7 @@ body {
   ); /* silver with 50% opacity 192,192,192 */
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   display: block; /* Ensures default block layout for direct children */
+  font: 14px / normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Source Code Pro', 'source-code-pro', monospace
 }
 
 .header {
@@ -80,7 +81,7 @@ body {
   min-width: 0; /* Prevents flex items from overflowing */
   padding: 10px;
   box-sizing: border-box; /* Includes padding and border in the element's size */
-  max-width: 50%; /* Ensures neither section exceeds half of the container's width */
+  max-width: 60%; /* Ensures neither section exceeds half of the container's width */
   overflow-y: auto; /* Adds vertical scroll if content overflows */
   /* height: 600px; Optional fixed height */
 }
@@ -92,7 +93,7 @@ body {
   min-width: 0; /* Prevents flex items from overflowing */
   padding: 10px;
   box-sizing: border-box; /* Includes padding and border in the element's size */
-  max-width: 50%; /* Ensures neither section exceeds half of the container's width */
+  max-width: 40%; /* Ensures neither section exceeds half of the container's width */
   overflow-y: auto; /* Adds vertical scroll if content overflows */
   height: calc(100vh - 40px); /* Optional: Adjust the height as needed */
   margin-top: 20px; /* Ensure there's space from the top of the viewport or any fixed element */
@@ -104,7 +105,7 @@ select {
   padding: 10px;
   background-color: #fff;
   color: #333;
-  font-size: 16px;
+  /* font-size: 16px; */
 }
 
 /* Specific styling for search group */
@@ -198,15 +199,15 @@ button:hover {
 .collapsible {
   background-color: #000000c7;
   color: white;
-  font-weight: bold;
+  /* font-weight: bold; */
   cursor: pointer;
-  padding: 12px;
+  /* padding: 12px; */
   width: 100%;
   border: none;
   text-align: left;
   outline: none;
-  font-size: 16px;
-  /* border-radius: 5px; */
+  /* font-size: 16px; */
+  font: 12px / normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Source Code Pro', 'source-code-pro', monospace;
 }
 
 .collapsible:hover {
@@ -403,10 +404,10 @@ form label {
   align-items: flex-start; /* Align items to the top */
   flex-wrap: wrap; /* Allow wrapping for smaller screens */
   font-weight: bold;
-  font-size: 16px;
+  /* font-size: 16px; */
   gap: 10px;
   line-height: 30px;
-  letter-spacing: 2px;
+  /* letter-spacing: 2px; */
   text-transform: lowercase;
 }
 
