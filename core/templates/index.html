@@ -27,27 +27,19 @@
       <h1>┗┫⦀⦙ｂｅｔｔｅｒｓｃａｎ⦙⦀┣┛</h1>
     </div>
     <div id="dashboard">
-      <div id="menuGroup">
-        <button onclick="window.location.href='/'">Main</button>
-        <button onclick="window.open('http://127.0.0.1:8001', '_blank')">
-          Targets
-        </button>
-        <button onclick="window.location.href='/'">Comms</button>
-        <button onclick="getActiveSession()">Report</button>
-      </div>
 
       <div id="inputDropdownFlex">
         <div id="inputGroup">
           <input
             type="text"
             id="pathInput"
-            placeholder="e.g, mainet:0xe592427a0aece92de3edee1f18e0157c05861564"
+            placeholder="<network>:<address> or explorer url"
             style="width: 450px"
           />
           <input
             type="text"
             id="paramInput"
-            placeholder="Optional: API/ContractName"
+            placeholder="optional: api/contract_name"
             style="color: #fff"
           />
           <button onclick="loadData()">Load</button>
@@ -55,6 +47,14 @@
         <div id="dropdownContainer"></div>
       </div>
 
+      <div id="menuGroup">
+        <button onclick="window.open('http://127.0.0.1:8001', '_blank')">
+          Targets
+        </button>
+        <button onclick="getActiveSession()">Report</button>
+        <button onclick="clearData()">Clean Storage</button>
+      </div>
+      
       <div id="homepage">
         <h2 id="homepage-headers">█ Betterscan v0.1 █</h2>
         <p>
@@ -361,28 +361,12 @@
         window.location.href = "/report?session_id=" + sessionId;
       }
 
-      function poupulateSessionStorageDropdown() {
+      function populateSessionStorageDropdown() {
         var select = document.createElement("select");
         select.id = "keysDropdown";
 
-        var actionSelect = document.createElement("select");
-        actionSelect.id = "actionSelect";
-        var jumpOption = document.createElement("option");
-        jumpOption.value = "jump";
-        jumpOption.text = "Jump To Session";
-        var clearOption = document.createElement("option");
-        clearOption.value = "clear";
-        clearOption.text = "Clear Storage";
-        actionSelect.appendChild(jumpOption);
-        actionSelect.appendChild(clearOption);
-
         select.onchange = function () {
-          var action = document.getElementById("actionSelect").value;
-          if (action === "clear") {
-            clearData();
-          } else if (action === "jump") {
-            jumpToSession(select.value);
-          }
+          jumpToSession(select.value);
         };
 
         var defaultOption = document.createElement("option");
@@ -415,7 +399,6 @@
         var container = document.getElementById("dropdownContainer");
         container.innerHTML = "";
         container.appendChild(select);
-        container.appendChild(actionSelect);
       }
 
       function initializePageWithData() {
@@ -1504,7 +1487,7 @@
       document.addEventListener("DOMContentLoaded", function () {
         hljs.highlightAll();
         initializePageWithData();
-        poupulateSessionStorageDropdown();
+        populateSessionStorageDropdown();
       });
 
       document
