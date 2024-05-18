@@ -1,8 +1,6 @@
 .env
 out
-out_backup
 venv
-OxODexPool
 targets
 datasette/*.db
 datasette/*.csv

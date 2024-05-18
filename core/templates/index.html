@@ -27,7 +27,6 @@
       <h1>┗┫⦀⦙ｂｅｔｔｅｒｓｃａｎ⦙⦀┣┛</h1>
     </div>
     <div id="dashboard">
-
       <div id="inputDropdownFlex">
         <div id="inputGroup">
           <input
@@ -54,7 +53,7 @@
         <button onclick="getActiveSession()">Report</button>
         <button onclick="clearData()">Clean Storage</button>
       </div>
-      
+
       <div id="homepage">
         <h2 id="homepage-headers">█ Betterscan v0.1 █</h2>
         <p>
@@ -313,7 +312,6 @@
       }
 
       function fetchSessionData(sessionPath) {
-        console.log("fetchSessionData -> sessionPath:", sessionPath);
         return fetch(
           `/get_session_data?path=${encodeURIComponent(sessionPath)}`
         )
@@ -383,7 +381,6 @@
             return response.json();
           })
           .then((directories) => {
-            console.log("directories", directories);
             Object.entries(directories).forEach(([directory]) => {
               var option = document.createElement("option");
               var parts = directory.split(":");
@@ -580,7 +577,6 @@
       }
 
       function jumpToExpression(expressions) {
-        console.log("jumpToExpression -> expressions:", expressions);
         const urlParams = new URLSearchParams(window.location.search);
         let session_path = urlParams.get("session_id");
         var sessionData = getSessionData(session_path);
@@ -652,11 +648,9 @@
         // localStorage is only used for single session storage
         // otherwise send POST to download or retrive from local filesystem
         if (localStorage.getItem(path)) {
-          console.log("session_path", path);
           window.history.pushState(path, "", `/?session_id=${path}`);
           initializeLoadData(path);
         } else {
-          console.log("Rendering new path in loadData()", path);
           fetch("/", {
             method: "POST",
             headers: {
@@ -803,7 +797,6 @@
             searchCriteria[actionObj.action] = actionObj.targets;
           }
         });
-        console.log("filterData() -> searchCriteria:", searchCriteria);
         fetch("/filter", {
           method: "POST",
           headers: {
@@ -1393,7 +1386,6 @@
           actionObj.targets.push(target);
         }
 
-        console.log(selectedActionTargets);
       }
 
       // ############################### end SEARCH_TARGET_TOOL
@@ -1455,10 +1447,7 @@
       function populateScanDropdown(dropdownId, dataKey) {
         const urlParams = new URLSearchParams(window.location.search);
         let session_path = urlParams.get("session_id");
-        /// mainet:0x1337 (no name, no path)
-        console.log("populateScanDropdown -> session_path", session_path);
-        var sessionData = getSessionData(session_path); /// getSessionData doesn't retrive sessionData.json!!!
-        console.log("populateScanDropdown -> sessionData", sessionData);
+        var sessionData = getSessionData(session_path);
         var dropdown = document.getElementById(dropdownId);
         dropdown.innerHTML = '<option value="">All</option>';
 
