@@ -33,10 +33,9 @@ returns *_sessionData.json file in the files/out directory
 best to use full path for all arguments 
 """
 
+
 class AnalyticsClass:
-    def __init__(
-        self, target_compile: str, target_name: str, config_dir: str = None
-    ):
+    def __init__(self, target_compile: str, target_name: str, config_dir: str = None):
         self.name = target_name
 
         if config_dir:
@@ -53,7 +52,7 @@ class AnalyticsClass:
         except Exception as e:
             print("Error initializing Slither (AnalyticsClass.init):", e)
             raise e
-        
+
         self.property_check = PropertyMatchClass(self.slither)
         self.root_contract = None
         self.root_contract_path = None
@@ -261,6 +260,14 @@ class AnalyticsClass:
             ],
             "all_variables": [var.name for var in contract.state_variables],
             "all_function_names": [func.full_name for func in contract.functions],
+            "all_library_calls": [
+                (call[0].name, call[1].canonical_name)
+                for call in contract.all_library_calls
+                if isinstance(call[1], Function)
+            ],
+            "all_solidity_calls": [
+                call.name for func in contract.functions for call in func.solidity_calls
+            ],
             "all_external_calls": [
                 str(call)
                 for func in contract.functions
@@ -378,6 +385,9 @@ class AnalyticsClass:
     def run_ityfuzz_scan():
         pass
 
+    def analyze_external(self, contract: Contract):
+        pass
+
     def run_analysis(self):
         for contract in self.slither.contracts:
 
@@ -434,6 +444,7 @@ class AnalyticsClass:
                     self.analyze_variable(variable)
 
                 self.analyze_contract(contract)
+                self.analyze_external(contract)
 
         try:
             self.run_slither_scan()
@@ -452,6 +463,10 @@ class AnalyticsClass:
             "source_code": self.output_sources,
             "scan_results": self.output_scan,
         }
+
+        # TODO: Call ContractMap class here with external_calls_functions
+        # NOTE: Step 1) Just make a call lol. construct abi, filter out lib funcs
+        # NOTE: Step 2) use the return address to re-init DownloadClass
 
         return self.output_full
 
