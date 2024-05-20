@@ -8,6 +8,7 @@ from slither.core.declarations import Contract
 
 w3 = Web3(Web3.HTTPProvider("http://localhost:8545"))
 
+EXCEPTIONS = ["msg.value", "msg.sender", "new ", "this.", "address(", "abi."]
 
 # AnalyticClass (with session_data), cli or other python scripts (with target_string)
 class ContractMap:
@@ -20,9 +21,26 @@ class ContractMap:
         self.downloader_map = None
 
     def get_only_external_calls(self):
-        all_ext = set(self.session_data.contract_data.all_external_calls)
-        all_lib = set(self.session_data.contract_data.all_library_calls)
-        self.external_calls = all_ext - all_lib
+        lib_names = self.extract_lib_names(self.session_data["all_library_calls"])
+        full_exclusions = lib_names.union(EXCEPTIONS)        
+        self.external_calls = [call for call in self.session_data["all_external_calls"]
+                               if not self.contains_exclusions(call, full_exclusions)]
+
+    def extract_lib_names(self, library_calls):
+        pattern = re.compile(r"^(\w+)")
+        lib_names = set()
+        for call in library_calls:
+            match = pattern.match(call)
+            if match:
+                lib_names.add(match.group(1))
+        return lib_names
+
+    def contains_exclusions(self, call, exclusions):
+        for exclusion in exclusions:
+            if exclusion in call:
+                return True
+        return False
+
 
     def get_external_interface(self):
         self.external_interface = list(

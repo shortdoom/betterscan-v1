@@ -20,6 +20,7 @@ from utils.utils import get_detectors, get_slitherin_detectors, run_all_detector
 
 from prompt import PromptClass
 from property_match import PropertyMatchClass
+from contract_map import ContractMap
 
 """ 
 python analyze.py files/out/mainet:0x1337/your_target_dir/TargetContract.sol --target_name TargetContractName  --config_dir files/out/mainet:0x1337
@@ -260,19 +261,19 @@ class AnalyticsClass:
             ],
             "all_variables": [var.name for var in contract.state_variables],
             "all_function_names": [func.full_name for func in contract.functions],
-            "all_library_calls": [
-                (call[0].name, call[1].canonical_name)
+            "all_library_calls": list(set([
+                call[1].canonical_name
                 for call in contract.all_library_calls
                 if isinstance(call[1], Function)
-            ],
-            "all_solidity_calls": [
+            ])),
+            "all_solidity_calls": list(set([
                 call.name for func in contract.functions for call in func.solidity_calls
-            ],
-            "all_external_calls": [
+            ])),
+            "all_external_calls": list(set([
                 str(call)
                 for func in contract.functions
                 for call in func.external_calls_as_expressions
-            ],
+            ])),
             "all_reachable_from_functions": list(
                 set(
                     [
@@ -291,6 +292,10 @@ class AnalyticsClass:
         }
 
         self.output_contract = data
+        
+        contract_map = ContractMap(None, data)
+        contract_map.get_only_external_calls()
+        data["external_calls_to_variables"] = contract_map.external_calls
 
         return data
 
