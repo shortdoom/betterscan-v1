@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request, render_template
 from analyze import AnalyticsClass
 from analyze import PromptClass
 from downloader import DownloaderClass
+from contract_map import ContractMap
 from urllib.parse import urlparse
 from web3 import Web3
 from git import Repo
@@ -281,52 +282,62 @@ def compile_from_github(path, contract_name):
 def index():
     if request.method == "POST":
         try:
-
             path = request.form["path"]
             param = request.form["param"]
             path_type = sort_path(path)
 
+            # target input etherscan url
             if path_type == "network_url_target":
                 network_address = get_target_from_url(path)
                 if network_address:
                     data, status_code = compile_from_network(network_address)
-                    print("status_code", status_code)
                     if status_code == 400:
                         return data, status_code
+                    else:
+                        return jsonify(data)
                 else:
-                    return (
-                        "URL does not match any supported network or contains no valid EVM address",
-                        400,
-                    )
+                    return "Invalid URL target", 400
 
-            # NOTE: Github integration is experimental, breaks often
+            # target input git clone
             if path_type == "repo_target" or path_type == "file_target":
                 data, status_code = compile_from_github(path, param)
                 if status_code == 400:
                     return data, status_code
-            elif path_type == "network_target":
+                else:
+                    return jsonify(data)
 
+            # target input <network>:<address>
+            elif path_type == "network_target":
                 existing_data = _get_session_data(path)
                 if existing_data:
                     return jsonify(existing_data)
-
                 data, status_code = compile_from_network(path, param)
-
                 if status_code == 400:
                     return data, status_code
+                else:
+                    return jsonify(data)
+
+            # target input ~/files/out/path/to/dir
             elif path_type == "dir_target":
-                # NOTE: WIP, only works for already analyzed target, generate sessionData with analyze.py
                 session_data_path = os.path.join(path, "sessionData.json")
                 if os.path.isfile(session_data_path):
-                    data = load_source(session_data_path)
+                    return jsonify(load_source(session_data_path))
                 else:
                     return "Invalid directory target", 400
 
-            return jsonify(data)
         except Exception as e:
             return jsonify({"error": str(e)}), 400
     else:
         return render_template("index.html")
+
+
+@app.route("/contract_map", methods=["POST"])
+def get_contract_map():
+    path = request.args.get("path") # <network>:<address>
+    data = _get_session_data(path)
+    contract_map = ContractMap(None, data)
+    contract_map.fetch_variable_addresses()
+    return jsonify(contract_map.external_addresses)
 
 
 @app.route("/get_session_data", methods=["GET"])

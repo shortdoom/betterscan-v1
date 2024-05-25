@@ -107,7 +107,6 @@ class AnalyticsClass:
             }.values()
         )
 
-        # Returns all internal calls tree NOTE: can overshoot
         return "\n\n".join(
             _get_source_code(x).lstrip() for x in all_internal_calls if x
         )
@@ -154,6 +153,11 @@ class AnalyticsClass:
                 variable.source_mapping.lines[-1],
             ],
         }
+        
+        contract_map = ContractMap(None, [data])
+        contract_map.fetch_variable_addresses()
+        data["external_addresses"] = contract_map.external_addresses
+        
         self.output_variables.append(data)
 
     def analyze_function(self, function: Function, inherited=False):
@@ -390,9 +394,6 @@ class AnalyticsClass:
     def run_ityfuzz_scan():
         pass
 
-    def analyze_external(self, contract: Contract):
-        pass
-
     def run_analysis(self):
         for contract in self.slither.contracts:
 
@@ -449,7 +450,6 @@ class AnalyticsClass:
                     self.analyze_variable(variable)
 
                 self.analyze_contract(contract)
-                self.analyze_external(contract)
 
         try:
             self.run_slither_scan()
@@ -468,10 +468,6 @@ class AnalyticsClass:
             "source_code": self.output_sources,
             "scan_results": self.output_scan,
         }
-
-        # TODO: Call ContractMap class here with external_calls_functions
-        # NOTE: Step 1) Just make a call lol. construct abi, filter out lib funcs
-        # NOTE: Step 2) use the return address to re-init DownloadClass
 
         return self.output_full
 
@@ -504,6 +500,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "config_dir",
+        nargs='?',
         default="",
         help="Path to the directory containing the config file for solc, changes cwd(), only for cryticCompile",
     )

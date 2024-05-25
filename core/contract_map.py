@@ -6,11 +6,17 @@ from slither.slither import Slither
 from slither.core.declarations import Function
 from slither.core.declarations import Contract
 
-w3 = Web3(Web3.HTTPProvider("http://localhost:8545"))
+w3 = Web3(Web3.HTTPProvider("https://eth.llamarpc.com"))
 
 EXCEPTIONS = ["msg.value", "msg.sender", "new ", "this.", "address(", "abi."]
+TYPE_EXCEPTIONS = ["uint", "int", "bool", "bytes", "string", "mapping"]
 
 # AnalyticClass (with session_data), cli or other python scripts (with target_string)
+# NOTE: This function is best initialized with a target_string from Downloader and sessionData from AnalyticClass
+# NOTE: This should be initialized by app.py with full sessionData, not analyze.py with partial data
+# NOTE: If user wants to generate map without an UI, use a targets_run.py script (requires re-working it into cli module fully)
+# NOTE: targets_run.py will invoke ContractMap with appropriate argumetns
+
 class ContractMap:
     def __init__(self, target_string: str = None, session_data: list = None):
         self.session_data = session_data
@@ -19,6 +25,29 @@ class ContractMap:
         self.external_interface = None
         self.external_addresses = None
         self.downloader_map = None
+      
+    def fetch_variable_addresses(self):
+        """
+        Fetches the addresses or data from the contract based on variable selectors
+        that are not in TYPE_EXCEPTIONS.
+        """
+        results = {}
+        for var in self.session_data:
+            if not any(var["variable_type"].startswith(_type) for _type in TYPE_EXCEPTIONS):
+                function_selector = var["variable_selector"]
+                print("calling", function_selector, "with type", var["variable_type"])
+                try:
+                    call_data = function_selector
+                    result = w3.eth.call({
+                        'to': self.target_string, # TODO: ERR! Currently None
+                        'data': call_data
+                    })
+                    results[var["variable_name"]] = result.hex()
+                except Exception as e:
+                    print(f"Error calling variable {var['variable_name']}: {e}")
+        
+        self.external_addresses = results
+          
 
     def get_only_external_calls(self):
         lib_names = self.extract_lib_names(self.session_data["all_library_calls"])
