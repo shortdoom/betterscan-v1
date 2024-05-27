@@ -47,16 +47,16 @@ def check_if_source_exists(path):
     Otherwise, returns None.
     """
     base_path = os.path.join(app_dir, "files", "out")
+    
     for root, dirs, _ in os.walk(base_path):
         for dir_name in dirs:
             if path in dir_name:
                 session_data_path = os.path.join(root, dir_name, "sessionData.json")
-
                 if os.path.isfile(session_data_path):
                     return session_data_path
                 else:
                     print(f"sessionData.json not found in directory: {dir_name}")
-    print(f"No matching directory found for path: {path}")
+                    
     return None
 
 
@@ -213,6 +213,13 @@ def compile_from_network(path, api_key=None):
             function_data["prompts"] = {strategy: "" for strategy in all_strategies}
     except Exception as e:
         print(f"Error generating available strategies: {str(e)}")
+        
+    try:
+        contract_map = ContractMap(path, target.output_variables)
+        contract_map.fetch_variable_addresses()
+        print(f"External addresses: {contract_map.external_addresses}")
+    except Exception as e:
+        print(f"Error fetching variable addresses: {e}")
 
     data = {
         "network_info": source.contract_info,
@@ -282,6 +289,7 @@ def compile_from_github(path, contract_name):
 def index():
     if request.method == "POST":
         try:
+            
             path = request.form["path"]
             param = request.form["param"]
             path_type = sort_path(path)
@@ -329,15 +337,6 @@ def index():
             return jsonify({"error": str(e)}), 400
     else:
         return render_template("index.html")
-
-
-@app.route("/contract_map", methods=["POST"])
-def get_contract_map():
-    path = request.args.get("path") # <network>:<address>
-    data = _get_session_data(path)
-    contract_map = ContractMap(None, data)
-    contract_map.fetch_variable_addresses()
-    return jsonify(contract_map.external_addresses)
 
 
 @app.route("/get_session_data", methods=["GET"])
