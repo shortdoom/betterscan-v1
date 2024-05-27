@@ -58,7 +58,7 @@ def generate_address_abi(variables_data):
             var["variable_type"].startswith(_type) for _type in TYPE_EXCEPTIONS
         ):
 
-            #  address constant T = 0x1234567890123456789012345678901234567890;
+            # address constant T = 0x1234567890123456789012345678901234567890;
             if "variable_body" in var:
                 match = re.search(r"0x[a-fA-F0-9]{40}", var["variable_body"])
                 if match:
@@ -81,12 +81,28 @@ def generate_address_abi(variables_data):
 
 
 class ContractMap:
-    def __init__(self, target_address: str = None):
+    def __init__(self, target_address: str = None, session_data: dict = None):
 
         self.w3 = Web3(Web3.HTTPProvider("https://eth.llamarpc.com"))
-        session_data_path = check_if_source_exists(target_address)
+        
+        if target_address:        
+            session_data_path = check_if_source_exists(target_address)
+            self.target_address = (
+            Web3.to_checksum_address(target_address.split(":")[1])
+            if target_address
+            else None
+        )
 
-        if session_data_path:
+        if session_data:
+            self.session_data = session_data
+            self.variable_call, self.abi_variable = generate_address_abi(
+                self.session_data["variables_data"]
+            )
+            self.contract = self.w3.eth.contract(
+                address=Web3.to_checksum_address(target_address.split(":")[1]),
+                abi=self.abi_variable,
+            )
+        elif session_data_path:
             self.session_data = _get_session_data(session_data_path)
             self.variable_call, self.abi_variable = generate_address_abi(
                 self.session_data["variables_data"]
@@ -96,14 +112,9 @@ class ContractMap:
                 abi=self.abi_variable,
             )
         else:
-            # TODO: Run main.py (similar to app.py) that'll generate the sessionData.json
-            raise ValueError("Session data not found. Run the analytics first.")
+            # TODO: Add main.py (similar to app.py) that'll generate the sessionData.json
+            raise ValueError("Session data not found and/or target address missing. Run the analytics first.")
 
-        self.target_address = (
-            Web3.to_checksum_address(target_address.split(":")[1])
-            if target_address
-            else None
-        )
 
         self.external_addresses = None
         self.external_calls = None

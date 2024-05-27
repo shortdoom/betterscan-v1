@@ -47,7 +47,7 @@ def check_if_source_exists(path):
     Otherwise, returns None.
     """
     base_path = os.path.join(app_dir, "files", "out")
-    
+
     for root, dirs, _ in os.walk(base_path):
         for dir_name in dirs:
             if path in dir_name:
@@ -56,7 +56,7 @@ def check_if_source_exists(path):
                     return session_data_path
                 else:
                     print(f"sessionData.json not found in directory: {dir_name}")
-                    
+
     return None
 
 
@@ -213,13 +213,6 @@ def compile_from_network(path, api_key=None):
             function_data["prompts"] = {strategy: "" for strategy in all_strategies}
     except Exception as e:
         print(f"Error generating available strategies: {str(e)}")
-        
-    try:
-        contract_map = ContractMap(path)
-        contract_map.fetch_variable_addresses()
-        print(f"External addresses: {contract_map.external_addresses}")
-    except Exception as e:
-        print(f"Error fetching variable addresses: {e}")
 
     data = {
         "network_info": source.contract_info,
@@ -229,6 +222,21 @@ def compile_from_network(path, api_key=None):
         "source_code": target.output_sources,
         "scan_results": target.output_scan,
     }
+    
+    try:
+        contract_map = ContractMap(path, data)
+        contract_map.run_map()
+        target.output_contract["external_calls"] = contract_map.external_calls
+        target.output_contract["external_addresses"] = contract_map.external_addresses
+
+        for var in target.output_variables:
+            for key, value in contract_map.external_addresses.items():
+                if var["variable_name"] == key:
+                    var["address"] = value
+
+    except Exception as e:
+        print(f"Error fetching variable addresses: {e}")
+
 
     with open(os.path.join(source.output_dir, "sessionData.json"), "w") as f:
         json.dump(data, f, indent=4)
@@ -289,7 +297,7 @@ def compile_from_github(path, contract_name):
 def index():
     if request.method == "POST":
         try:
-            
+
             path = request.form["path"]
             param = request.form["param"]
             path_type = sort_path(path)
@@ -315,10 +323,11 @@ def index():
                     return jsonify(data)
 
             # target input <network>:<address>
-            elif path_type == "network_target":
+            if path_type == "network_target":
                 existing_data = _get_session_data(path)
                 if existing_data:
                     return jsonify(existing_data)
+                
                 data, status_code = compile_from_network(path, param)
                 if status_code == 400:
                     return data, status_code
@@ -326,7 +335,7 @@ def index():
                     return jsonify(data)
 
             # target input ~/files/out/path/to/dir
-            elif path_type == "dir_target":
+            if path_type == "dir_target":
                 session_data_path = os.path.join(path, "sessionData.json")
                 if os.path.isfile(session_data_path):
                     return jsonify(load_source(session_data_path))
