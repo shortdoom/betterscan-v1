@@ -215,7 +215,7 @@ def compile_from_network(path, api_key=None):
         print(f"Error generating available strategies: {str(e)}")
         
     try:
-        contract_map = ContractMap(path, target.output_variables)
+        contract_map = ContractMap(path)
         contract_map.fetch_variable_addresses()
         print(f"External addresses: {contract_map.external_addresses}")
     except Exception as e:

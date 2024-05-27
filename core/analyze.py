@@ -20,7 +20,6 @@ from utils.utils import get_detectors, get_slitherin_detectors, run_all_detector
 
 from prompt import PromptClass
 from property_match import PropertyMatchClass
-from contract_map import ContractMap
 
 """ 
 python analyze.py files/out/mainet:0x1337/your_target_dir/TargetContract.sol --target_name TargetContractName  --config_dir files/out/mainet:0x1337
@@ -153,11 +152,7 @@ class AnalyticsClass:
                 variable.source_mapping.lines[-1],
             ],
         }
-        
-        contract_map = ContractMap(None, [data])
-        contract_map.fetch_variable_addresses()
-        data["external_addresses"] = contract_map.external_addresses
-        
+                
         self.output_variables.append(data)
 
     def analyze_function(self, function: Function, inherited=False):
@@ -297,10 +292,6 @@ class AnalyticsClass:
 
         self.output_contract = data
         
-        contract_map = ContractMap(None, data)
-        contract_map.get_only_external_calls()
-        data["external_calls_to_variables"] = contract_map.external_calls
-
         return data
 
     def run_slither_scan(self):
@@ -391,7 +382,7 @@ class AnalyticsClass:
         except json.JSONDecodeError as e:
             print(f"Failed to decode JSON output from Semgrep: {e}")
 
-    def run_ityfuzz_scan():
+    def run_contract_map():
         pass
 
     def run_analysis(self):
@@ -468,7 +459,7 @@ class AnalyticsClass:
             "source_code": self.output_sources,
             "scan_results": self.output_scan,
         }
-
+        
         return self.output_full
 
     def load_target_contract(self, target_name: str):
