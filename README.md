@@ -36,11 +36,11 @@ Set up custom prompts for your LLM-based audits
 
 # Demo
 
-![App navigation](/docs/navigation1.png)
-![Contract data](/docs/contract_data1.png)
-![Search functions](/docs/search_functions1.png)
-![Search detectors](/docs/search_detectors1.png)
-![Functions view](/docs/functions_view1.png)
+![App navigation](/docs/images/navigation1.png)
+![Contract data](/docs/images/contract_data1.png)
+![Search functions](/docs/images/search_functions1.png)
+![Search detectors](/docs/images/search_detectors1.png)
+![Functions view](/docs/images/functions_view1.png)
 
 # Dashboard sections
 

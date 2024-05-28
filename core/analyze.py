@@ -154,6 +154,8 @@ class AnalyticsClass:
         }
                 
         self.output_variables.append(data)
+        
+        return data
 
     def analyze_function(self, function: Function, inherited=False):
         summary = function.get_summary()
@@ -382,8 +384,6 @@ class AnalyticsClass:
         except json.JSONDecodeError as e:
             print(f"Failed to decode JSON output from Semgrep: {e}")
 
-    def run_contract_map():
-        pass
 
     def run_analysis(self):
         for contract in self.slither.contracts:

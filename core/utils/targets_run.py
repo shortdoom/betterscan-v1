@@ -5,13 +5,19 @@ import time
 import json
 import os
 import csv
+from collections import deque
 
 """
-Loads targets from the db and sends it to the app
+python targets_run.py --bountyId <name> --csv <file_path> --target <network>:<address>
 
-core/targets_run.py --bountyId <name>
+bountyId: name of the bounty from immunefi_data.db, will only work with <network>:<address> targets
+csv: file path to a csv file containing <network>:<address> targets in single column
+target: single target to run against the app, will only work with <network>:<address>
 
 requires app.py to be running on 127.0.0.1:5000
+
+creates sessionData.json in files/out/<network>:<address> directory
+cli version of front end application
 
 """
 app_dir = os.path.dirname(os.path.realpath(__file__))
@@ -53,11 +59,7 @@ def check_if_exists(path):
     conn.close()
     return exists == 1
 
-
-from collections import deque
-
-
-def post_to_app(targets):
+def run_analysis(targets):
     url = "http://127.0.0.1:5000/"
     timestamps = deque(maxlen=5)
 
@@ -127,4 +129,4 @@ if __name__ == "__main__":
     else:
         targets = get_targets(args.bountyId)
 
-    post_to_app(targets)
+    run_analysis(targets)

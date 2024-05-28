@@ -7,10 +7,10 @@ from web3 import Web3
 EXCEPTIONS = ["msg.value", "msg.sender", "new ", "this.", "address(", "abi."]
 TYPE_EXCEPTIONS = ["uint", "int", "bool", "bytes", "string", "mapping"]
 app_dir = os.path.dirname(os.path.realpath(__file__))
+base_path = os.path.join(app_dir, "files", "out")
 
 
 def check_if_source_exists(path):
-    base_path = os.path.join(app_dir, "files", "out")
     for root, dirs, _ in os.walk(base_path):
         for dir_name in dirs:
             if path in dir_name:
@@ -21,6 +21,19 @@ def check_if_source_exists(path):
                     print(f"sessionData.json not found in directory: {dir_name}")
 
     return None
+
+
+def check_for_common_external():
+    dirs = os.listdir(base_path)
+    session_data_paths = []
+    for dir_name in dirs:
+        session_data_path = os.path.join(base_path, dir_name, "sessionData.json")
+        if os.path.isfile(session_data_path):
+            session_data_paths.append(session_data_path)
+        else:
+            print(f"sessionData.json not found in directory: {dir_name}")
+
+    return session_data_paths
 
 
 def load_source(file_path):
@@ -47,8 +60,8 @@ def generate_address_abi(variables_data):
     Generates minimal ABI from the provided variables data.
     Each entry in the variables_data should have at least the following fields:
     - variable_name
-    - variable_selector
     - variable_type
+    - variable_body
     This function filters out variables based on TYPE_EXCEPTIONS.
     """
     abi = []
@@ -80,18 +93,62 @@ def generate_address_abi(variables_data):
     return variable_call, abi
 
 
+class ContractMapScan:
+    def __init__(self):
+        self.session_data_paths = check_for_common_external()
+        self.session_external_addresses = []
+
+    # Scans all of the files/out for external calls to the same addresses
+    def get_common_external_all(self):
+        external_addresses_found = []
+        for session_data_path in self.session_data_paths:
+            session_data = _get_session_data(session_data_path)
+            external_addresses_found.append(
+                session_data["contract_data"]["external_addresses"]
+            )
+        for addresses in external_addresses_found:
+            for name, address in addresses.items():
+                session_found = check_if_source_exists(address)
+                if session_found:
+                    print(
+                        "session_found in:",
+                        session_found,
+                        "for contract",
+                        f"{name}:{address}",
+                    )
+
+    # Scans only specific directory
+    def get_common_external_target(self, target_address):
+        session_data_path = check_if_source_exists(target_address)
+        external_addresses_paths = {}
+        if session_data_path:
+            session_data = _get_session_data(session_data_path)
+            external_addresses = session_data["contract_data"]["external_addresses"]
+            for name, address in external_addresses.items():
+                session_found = check_if_source_exists(address)
+                if session_found:
+                    external_addresses_paths[name] = session_found
+
+            session_data["contract_data"][
+                "external_addresses_paths"
+            ] = external_addresses_paths
+
+            with open(session_data_path, "w") as f:
+                json.dump(session_data, f, indent=4)
+
+
 class ContractMap:
     def __init__(self, target_address: str = None, session_data: dict = None):
 
         self.w3 = Web3(Web3.HTTPProvider("https://eth.llamarpc.com"))
-        
-        if target_address:        
+
+        if target_address:
             session_data_path = check_if_source_exists(target_address)
             self.target_address = (
-            Web3.to_checksum_address(target_address.split(":")[1])
-            if target_address
-            else None
-        )
+                Web3.to_checksum_address(target_address.split(":")[1])
+                if target_address
+                else None
+            )
 
         if session_data:
             self.session_data = session_data
@@ -113,28 +170,27 @@ class ContractMap:
             )
         else:
             # TODO: Add main.py (similar to app.py) that'll generate the sessionData.json
-            raise ValueError("Session data not found and/or target address missing. Run the analytics first.")
-
+            raise ValueError(
+                "Session data not found and/or target address missing. Run the analytics first."
+            )
 
         self.external_addresses = None
         self.external_calls = None
-        
+
     def run_map(self):
-        
+
         if not self.target_address:
             raise ValueError("Target address not provided.")
-        
+
         if not self.session_data:
             raise ValueError("Session data not found.")
-        
+
         try:
             self.resolve_variable_to_address()
             self.get_only_external_calls()
-            print("External addresses:", self.external_addresses)
-            print("External calls:", self.external_calls)
         except Exception as e:
             print(f"Error: {e}")
-        
+
     def resolve_variable_to_address(self):
         results = {}
         for func_info in self.abi_variable:
@@ -185,3 +241,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     contract_map = ContractMap(args.target_address)
     contract_map.run_map()
+    contract_map_scan = ContractMapScan()
+    contract_map_scan.get_common_external_target(args.target_address)
