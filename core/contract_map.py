@@ -3,6 +3,9 @@ import os
 import json
 import argparse
 from web3 import Web3
+import networkx as nx
+import matplotlib.pyplot as plt
+from collections import defaultdict
 
 EXCEPTIONS = ["msg.value", "msg.sender", "new ", "this.", "address(", "abi."]
 TYPE_EXCEPTIONS = ["uint", "int", "bool", "bytes", "string", "mapping"]
@@ -23,14 +26,19 @@ def check_if_source_exists(path):
     return None
 
 
-def check_for_common_external():
+def find_all_session_data_paths():
     dirs = os.listdir(base_path)
     session_data_paths = []
     for dir_name in dirs:
+        
+        if os.path.isfile(os.path.join(base_path, dir_name)):
+            continue
+        
         session_data_path = os.path.join(base_path, dir_name, "sessionData.json")
         if os.path.isfile(session_data_path):
             session_data_paths.append(session_data_path)
         else:
+            print("Err")
             print(f"sessionData.json not found in directory: {dir_name}")
 
     return session_data_paths
@@ -45,7 +53,7 @@ def load_source(file_path):
     return data
 
 
-def _get_session_data(session_data_path):
+def get_session_data(session_data_path):
     """
     Returns the session data from files/out/$network:address if it exists, otherwise returns None.
     """
@@ -95,14 +103,20 @@ def generate_address_abi(variables_data):
 
 class ContractMapScan:
     def __init__(self):
-        self.session_data_paths = check_for_common_external()
+        self.session_data_paths = find_all_session_data_paths()
         self.session_external_addresses = []
-
+        self.session_external_addresses_paths = {}
+        self.contract_interactions = defaultdict(list)
+        self.graph = nx.Graph()
+        self.session_details = {} 
+        
+            
     # Scans all of the files/out for external calls to the same addresses
-    def get_common_external_all(self):
+    # NOTE: assumption is that files/out has relevant sessionData.json files
+    def get_common_external_protocol(self):
         external_addresses_found = []
         for session_data_path in self.session_data_paths:
-            session_data = _get_session_data(session_data_path)
+            session_data = get_session_data(session_data_path)
             external_addresses_found.append(
                 session_data["contract_data"]["external_addresses"]
             )
@@ -110,11 +124,8 @@ class ContractMapScan:
             for name, address in addresses.items():
                 session_found = check_if_source_exists(address)
                 if session_found:
-                    print(
-                        "session_found in:",
-                        session_found,
-                        "for contract",
-                        f"{name}:{address}",
+                    self.contract_interactions[f"{name}:{address}"].setdefault(
+                        name, session_found
                     )
 
     # Scans only specific directory
@@ -122,19 +133,73 @@ class ContractMapScan:
         session_data_path = check_if_source_exists(target_address)
         external_addresses_paths = {}
         if session_data_path:
-            session_data = _get_session_data(session_data_path)
+            session_data = get_session_data(session_data_path)
             external_addresses = session_data["contract_data"]["external_addresses"]
             for name, address in external_addresses.items():
                 session_found = check_if_source_exists(address)
                 if session_found:
                     external_addresses_paths[name] = session_found
 
-            session_data["contract_data"][
-                "external_addresses_paths"
-            ] = external_addresses_paths
+            self.session_external_addresses_paths = external_addresses_paths
+            
+    def collect_external_addresses(self):
+        for path in self.session_data_paths:
+            session_data = load_source(path)
+            target_address = session_data.get("network_info", {}).get("contract_address", "")
+            target_address_external_calls = session_data.get("contract_data", {}).get("external_addresses", {})
+            for contract_name, address in target_address_external_calls.items():
+                self.contract_interactions[target_address].append(address)
+                if address not in self.session_details:
+                    self.session_details[address] = path
 
-            with open(session_data_path, "w") as f:
-                json.dump(session_data, f, indent=4)
+    def build_graph(self):
+        for address, external_addresses in self.contract_interactions.items():
+            self.graph.add_node(address, label=address)
+            for external_address in external_addresses:
+                self.graph.add_node(external_address, label=external_address)
+                self.graph.add_edge(address, external_address)
+
+    def visualize_graph(self):
+        plt.figure(figsize=(20, 12))  # Increased figure size
+        pos = nx.spring_layout(self.graph, k=0.75, iterations=50)  # Adjust layout spacing and iterations
+        nx.draw_networkx_nodes(self.graph, pos, node_size=500, node_color="lightblue")
+        nx.draw_networkx_edges(self.graph, pos, width=1.0, alpha=0.5)
+        labels = {node: data['label'] for node, data in self.graph.nodes(data=True)}
+        nx.draw_networkx_labels(self.graph, pos, labels=labels, font_size=10)  # Adjust font size if needed
+        plt.title("Network Graph of External Addresses")
+        plt.axis('off')  # Hide axes to make it cleaner
+        plt.savefig("network_graph.png")  # Save the figure as a PNG file
+        plt.close()  # Close the plot to free up memory
+
+        
+    def export_address_to_session_mapping(self):
+        # Exporting the address-to-session mapping as a JSON file
+        with open(f"{base_path}/address_to_session_mapping.json", 'w') as f:
+            json.dump(self.session_details, f, indent=4)
+
+    def run(self):
+        print("Running contract map scan...")
+        self.collect_external_addresses()
+        print("External addresses collected.")
+        self.build_graph()
+        print("Graph built.")
+        self.visualize_graph()
+        self.export_address_to_session_mapping() 
+
+    def build_contract_map(self):
+        # Iterate over all session data paths
+        for session_data_path in self.session_data_paths:
+            session_data = get_session_data(session_data_path)
+            # Assuming the current address is part of the directory name (you might need to adjust this)
+            current_address = session_data_path.split('/')[-2].split(":")[1]
+            external_addresses = session_data["contract_data"]["external_addresses"]
+            
+            # Iterate over all external addresses found in the session data
+            for name, address in external_addresses.items():
+                session_found = check_if_source_exists(address)
+                if session_found:
+                    self.contract_interactions[current_address].setdefault(address, session_found)
+        return self.contract_interactions
 
 
 class ContractMap:
@@ -160,7 +225,7 @@ class ContractMap:
                 abi=self.abi_variable,
             )
         elif session_data_path:
-            self.session_data = _get_session_data(session_data_path)
+            self.session_data = get_session_data(session_data_path)
             self.variable_call, self.abi_variable = generate_address_abi(
                 self.session_data["variables_data"]
             )
@@ -239,7 +304,10 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    contract_map = ContractMap(args.target_address)
-    contract_map.run_map()
+    # contract_map = ContractMap(args.target_address)
+    # contract_map.run_map()
     contract_map_scan = ContractMapScan()
-    contract_map_scan.get_common_external_target(args.target_address)
+    contract_map_scan.run()
+    # contract_map_scan.get_common_external_protocol()
+    # print("Contract interactions:", contract_map_scan.contract_interactions)
+    # contract_map_scan.get_common_external_target(args.target_address)

@@ -3,6 +3,7 @@ from analyze import AnalyticsClass
 from analyze import PromptClass
 from downloader import DownloaderClass
 from contract_map import ContractMap
+from contract_map import ContractMapScan
 from urllib.parse import urlparse
 from web3 import Web3
 from git import Repo
@@ -225,10 +226,13 @@ def compile_from_network(path, api_key=None):
     
     try:
         contract_map = ContractMap(path, data)
+        contract_map_scan = ContractMapScan()
         contract_map.run_map()
+        contract_map_scan.get_common_external_target(path)
         target.output_contract["external_calls"] = contract_map.external_calls
         target.output_contract["external_addresses"] = contract_map.external_addresses
-
+        target.output_contract["external_addresses_paths"] = contract_map_scan.session_external_addresses_paths
+        
         for var in target.output_variables:
             for key, value in contract_map.external_addresses.items():
                 if var["variable_name"] == key:
