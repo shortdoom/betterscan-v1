@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <link rel="stylesheet" href="/static/default.min.css" />
+    <script src="/static/js/highlight.min.js"></script>
+    <script src="https://unpkg.com/cytoscape@3.19.1/dist/cytoscape.min.js"></script>
+
+  </head>
+  <body>
+    <div class="header" onclick="window.location.href='/'">
+      <h1>┗┫⦀⦙ｂｅｔｔｅｒｓｃａｎ⦙⦀┣┛</h1>
+    </div>
+    <div id="dashboard">
+      <div id="menuGroup">
+        <button onclick="window.location.href='/'">Full View</button>
+      </div>
+
+      <h1>UNDER CONSTRUCTION :)</h1>
+
+      <div id="cy" style="width: 800px; height: 600px;"></div>
+
+      </div>
+    </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+          fetch('/protocol_view')
+          .then(function(response) {
+              return response.json();  // Parse JSON response into native JavaScript objects
+          })
+          .then(function(data) {
+            console.log(data)
+              var cy = cytoscape({
+                  container: document.getElementById('cy'), // container to render in
+                  elements: data, // load elements from the server
+                  style: [
+                      {
+                          selector: 'node',
+                          style: {
+                              'background-color': '#0074D9',
+                              'label': 'data(id)',
+                              'color': '#ffffff',
+                              'text-outline-width': 2,
+                              'text-outline-color': '#0074D9',
+                              'text-valign': 'center',
+                              'text-halign': 'center'
+                          }
+                      },
+                      {
+                          selector: 'edge',
+                          style: {
+                              'width': 4,
+                              'line-color': '#ddd',
+                              'target-arrow-color': '#ddd',
+                              'target-arrow-shape': 'triangle'
+                          }
+                      }
+                  ],
+                  layout: {
+                      name: 'cose',  // layout type to use
+                      idealEdgeLength: 100,
+                      nodeRepulsion: 4500,
+                  }
+              });
+          })
+          .catch(function(error) {
+              console.error('Error fetching data: ', error);
+          });
+      });
+      </script>
+      
+  </body>
+</html>

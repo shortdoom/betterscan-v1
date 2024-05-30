@@ -6,6 +6,8 @@ from web3 import Web3
 import networkx as nx
 import matplotlib.pyplot as plt
 from collections import defaultdict
+import pygraphviz as pgv
+from networkx.drawing.nx_agraph import graphviz_layout
 
 EXCEPTIONS = ["msg.value", "msg.sender", "new ", "this.", "address(", "abi."]
 TYPE_EXCEPTIONS = ["uint", "int", "bool", "bytes", "string", "mapping"]
@@ -107,7 +109,7 @@ class ContractMapScan:
         self.session_external_addresses = []
         self.session_external_addresses_paths = {}
         self.contract_interactions = defaultdict(list)
-        self.graph = nx.Graph()
+        self.graph = nx.DiGraph() 
         self.session_details = {} 
         
             
@@ -142,34 +144,43 @@ class ContractMapScan:
 
             self.session_external_addresses_paths = external_addresses_paths
             
-    def collect_external_addresses(self):
+    def gen_protocol_graph(self):
         for path in self.session_data_paths:
             session_data = load_source(path)
             target_address = session_data.get("network_info", {}).get("contract_address", "")
+            target_contract = session_data.get("network_info", {}).get("contract_name", "")
             target_address_external_calls = session_data.get("contract_data", {}).get("external_addresses", {})
-            for contract_name, address in target_address_external_calls.items():
-                self.contract_interactions[target_address].append(address)
-                if address not in self.session_details:
-                    self.session_details[address] = path
-
-    def build_graph(self):
-        for address, external_addresses in self.contract_interactions.items():
-            self.graph.add_node(address, label=address)
-            for external_address in external_addresses:
-                self.graph.add_node(external_address, label=external_address)
-                self.graph.add_edge(address, external_address)
-
+            self.graph.add_node(target_address, label=target_contract)
+        
+            for external_contract_name, external_address in target_address_external_calls.items():
+                self.graph.add_node(external_address, label=external_contract_name)
+                self.graph.add_edge(target_address, external_address)       
+        
+                if external_address not in self.session_details:
+                    self.session_details[external_address] = path
+                    
+                
     def visualize_graph(self):
-        plt.figure(figsize=(20, 12))  # Increased figure size
-        pos = nx.spring_layout(self.graph, k=0.75, iterations=50)  # Adjust layout spacing and iterations
-        nx.draw_networkx_nodes(self.graph, pos, node_size=500, node_color="lightblue")
-        nx.draw_networkx_edges(self.graph, pos, width=1.0, alpha=0.5)
-        labels = {node: data['label'] for node, data in self.graph.nodes(data=True)}
-        nx.draw_networkx_labels(self.graph, pos, labels=labels, font_size=10)  # Adjust font size if needed
-        plt.title("Network Graph of External Addresses")
-        plt.axis('off')  # Hide axes to make it cleaner
-        plt.savefig("network_graph.png")  # Save the figure as a PNG file
-        plt.close()  # Close the plot to free up memory
+        A = nx.nx_agraph.to_agraph(self.graph)  # Convert to a PyGraphviz graph
+    
+        # Set Graphviz layout options
+        A.graph_attr.update(
+            {
+                'splines': 'spline',  # Use splines for edge curves
+                'rankdir': 'LR',  # Left to right graph layout
+                'nodesep': '0.75',  # Increase node separation
+                'ranksep': '1.2',  # Increase rank separation
+            }
+        )
+    
+        # You might try using a different layout if 'dot' isn't working well.
+        A.layout('fdp')  # Other options: 'neato', 'fdp', 'sfdp', 'twopi'
+        
+        graph_path = os.path.join(base_path, 'network_graph.png')
+        A.draw(graph_path)  # Draw graph to a file
+        
+        print("Graph has been saved as 'network_graph.png'")
+
 
         
     def export_address_to_session_mapping(self):
@@ -178,28 +189,9 @@ class ContractMapScan:
             json.dump(self.session_details, f, indent=4)
 
     def run(self):
-        print("Running contract map scan...")
-        self.collect_external_addresses()
-        print("External addresses collected.")
-        self.build_graph()
-        print("Graph built.")
+        self.gen_protocol_graph()
         self.visualize_graph()
         self.export_address_to_session_mapping() 
-
-    def build_contract_map(self):
-        # Iterate over all session data paths
-        for session_data_path in self.session_data_paths:
-            session_data = get_session_data(session_data_path)
-            # Assuming the current address is part of the directory name (you might need to adjust this)
-            current_address = session_data_path.split('/')[-2].split(":")[1]
-            external_addresses = session_data["contract_data"]["external_addresses"]
-            
-            # Iterate over all external addresses found in the session data
-            for name, address in external_addresses.items():
-                session_found = check_if_source_exists(address)
-                if session_found:
-                    self.contract_interactions[current_address].setdefault(address, session_found)
-        return self.contract_interactions
 
 
 class ContractMap:

@@ -5,6 +5,7 @@ from downloader import DownloaderClass
 from contract_map import ContractMap
 from contract_map import ContractMapScan
 from urllib.parse import urlparse
+import networkx as nx
 from web3 import Web3
 from git import Repo
 import re
@@ -223,7 +224,7 @@ def compile_from_network(path, api_key=None):
         "source_code": target.output_sources,
         "scan_results": target.output_scan,
     }
-    
+
     try:
         contract_map = ContractMap(path, data)
         contract_map_scan = ContractMapScan()
@@ -231,8 +232,10 @@ def compile_from_network(path, api_key=None):
         contract_map_scan.get_common_external_target(path)
         target.output_contract["external_calls"] = contract_map.external_calls
         target.output_contract["external_addresses"] = contract_map.external_addresses
-        target.output_contract["external_addresses_paths"] = contract_map_scan.session_external_addresses_paths
-        
+        target.output_contract["external_addresses_paths"] = (
+            contract_map_scan.session_external_addresses_paths
+        )
+
         for var in target.output_variables:
             for key, value in contract_map.external_addresses.items():
                 if var["variable_name"] == key:
@@ -240,7 +243,6 @@ def compile_from_network(path, api_key=None):
 
     except Exception as e:
         print(f"Error fetching variable addresses: {e}")
-
 
     with open(os.path.join(source.output_dir, "sessionData.json"), "w") as f:
         json.dump(data, f, indent=4)
@@ -331,7 +333,7 @@ def index():
                 existing_data = _get_session_data(path)
                 if existing_data:
                     return jsonify(existing_data)
-                
+
                 data, status_code = compile_from_network(path, param)
                 if status_code == 400:
                     return data, status_code
@@ -352,6 +354,19 @@ def index():
         return render_template("index.html")
 
 
+@app.route("/protocol_view", methods=["GET"])
+def protocol_view():
+    contract_map_scan = ContractMapScan()
+    contract_map_scan.run()
+    protocol_data = nx.node_link_data(contract_map_scan.graph)
+    return jsonify(protocol_data)
+
+
+@app.route("/protocol_view.html")
+def protocol_view_html():
+    return render_template("protocol_view.html")
+
+
 @app.route("/get_session_data", methods=["GET"])
 def get_session_data():
     path = request.args.get("path")
@@ -361,8 +376,12 @@ def get_session_data():
     else:
         return "Session data not found", 404
 
+@app.route("/report", methods=["GET"])
+def report():
+    return render_template("report.html")
 
-@app.route("/list_sessions")
+
+@app.route("/list_sessions", methods=["GET"])
 def list_sessions():
     try:
         base_path = os.path.join(app_dir, "files", "out")
@@ -377,29 +396,6 @@ def list_sessions():
     except Exception as e:
         print(f"Error listing sessions: {e}")
         return jsonify({"error": "Failed to list sessions", "details": str(e)}), 500
-
-
-@app.route("/report", methods=["GET", "POST"])
-def report():
-    if request.method == "POST":
-        try:
-            data = request.get_json()
-            session_data = data.get("sessionData")
-            search_criteria = data.get("searchCriteria")
-
-            filtered_functions = filter_functions(session_data, search_criteria)
-            filtered_variables = filter_variables(session_data, search_criteria)
-
-            return jsonify(
-                {
-                    "filtered_functions": filtered_functions,
-                    "filtered_variables": filtered_variables,
-                }
-            )
-        except Exception as e:
-            return jsonify({"error": str(e)}), 400
-    else:
-        return render_template("report.html")
 
 
 @app.route("/prompt", methods=["POST"])
