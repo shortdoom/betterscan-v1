@@ -10,7 +10,8 @@
     />
     <link rel="stylesheet" href="/static/default.min.css" />
     <script src="/static/js/highlight.min.js"></script>
-    <script src="https://unpkg.com/cytoscape@3.19.1/dist/cytoscape.min.js"></script>
+    <!-- <script src="https://unpkg.com/cytoscape@3.19.1/dist/cytoscape.min.js"></script> -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
 
   </head>
   <body>
@@ -24,56 +25,114 @@
 
       <h1>UNDER CONSTRUCTION :)</h1>
 
-      <div id="cy" style="width: 800px; height: 600px;"></div>
+      <div id="cy"></div>
 
       </div>
     </div>
     <script>
       document.addEventListener("DOMContentLoaded", function () {
+        const dashboard = document.getElementById('dashboard');
+        const width = dashboard.offsetWidth;
+        const height = window.innerHeight * 0.8;
+
           fetch('/protocol_view')
-          .then(function(response) {
-              return response.json();  // Parse JSON response into native JavaScript objects
-          })
-          .then(function(data) {
-            console.log(data)
-              var cy = cytoscape({
-                  container: document.getElementById('cy'), // container to render in
-                  elements: data, // load elements from the server
-                  style: [
-                      {
-                          selector: 'node',
-                          style: {
-                              'background-color': '#0074D9',
-                              'label': 'data(id)',
-                              'color': '#ffffff',
-                              'text-outline-width': 2,
-                              'text-outline-color': '#0074D9',
-                              'text-valign': 'center',
-                              'text-halign': 'center'
-                          }
-                      },
-                      {
-                          selector: 'edge',
-                          style: {
-                              'width': 4,
-                              'line-color': '#ddd',
-                              'target-arrow-color': '#ddd',
-                              'target-arrow-shape': 'triangle'
-                          }
-                      }
-                  ],
-                  layout: {
-                      name: 'cose',  // layout type to use
-                      idealEdgeLength: 100,
-                      nodeRepulsion: 4500,
-                  }
+          .then(response => response.json())
+          .then(data => {
+              const nodes = data.nodes;
+              const links = data.links;
+      
+              const svg = d3.select('#dashboard').append('svg')
+            .attr('width', width)
+            .attr('height', height);
+      
+            const simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links).id(d => d.id).distance(200))  // Increase distance for better spread
+            .force("charge", d3.forceManyBody().strength(-400))  // Increase repulsive force for better spread
+            .force("center", d3.forceCenter(width / 2, height / 2));
+      
+              const link = svg.append("g")
+                  .attr("stroke", "#ccc")
+                  .attr("stroke-opacity", 0.6)
+                  .selectAll("line")
+                  .data(links)
+                  .join("line")
+                  .attr("stroke-width", d => Math.sqrt(d.value));
+      
+              const node = svg.append("g")
+                  .attr("stroke", "#fff")
+                  .attr("stroke-width", 1.5)
+                  .selectAll("circle")
+                  .data(nodes)
+                  .join("circle")
+                  .attr("r", 15)
+                  .attr("fill", "#0074D9")
+                  .call(drag(simulation));
+      
+              // Adding labels to each node
+              const labels = svg.append("g")
+                  .attr("class", "labels")
+                  .selectAll("text")
+                  .data(nodes)
+                  .join("text")
+                  .text(d => d.label)  // Assuming each node data has a 'label' field
+                  .attr("x", d => d.x + 10)
+                  .attr("y", d => d.y)
+                  .attr("font-family", "monospace")
+                  .attr("font-weight", "bold")
+                  .attr("font-size", 16)
+                  .attr("fill", "white");
+      
+              simulation.on("tick", () => {
+                  link
+                      .attr("x1", d => d.source.x)
+                      .attr("y1", d => d.source.y)
+                      .attr("x2", d => d.target.x)
+                      .attr("y2", d => d.target.y);
+      
+                  node
+                      .attr("cx", d => d.x)
+                      .attr("cy", d => d.y);
+      
+                  labels
+                      .attr("x", d => d.x + 10)
+                      .attr("y", d => d.y);
               });
+      
+              function colorNode(d) {
+                  return d.group === 1 ? 'red' : 'blue';
+              }
+      
+              function drag(simulation) {
+                  function dragstarted(event) {
+                      if (!event.active) simulation.alphaTarget(0.3).restart();
+                      event.subject.fx = event.subject.x;
+                      event.subject.fy = event.subject.y;
+                  }
+                  
+                  function dragged(event) {
+                      event.subject.fx = event.x;
+                      event.subject.fy = event.y;
+                  }
+                  
+                  function dragended(event) {
+                      if (!event.active) simulation.alphaTarget(0);
+                      event.subject.fx = null;
+                      event.subject.fy = null;
+                  }
+                  
+                  return d3.drag()
+                      .on("start", dragstarted)
+                      .on("drag", dragged)
+                      .on("end", dragended);
+              }
+      
           })
           .catch(function(error) {
-              console.error('Error fetching data: ', error);
+              console.error('Error fetching data:', error);
           });
       });
       </script>
+      
       
   </body>
 </html>
