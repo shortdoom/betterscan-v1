@@ -9,10 +9,7 @@
       href="{{ url_for('static', filename='style.css') }}"
     />
     <link rel="stylesheet" href="/static/default.min.css" />
-    <script src="/static/js/highlight.min.js"></script>
-    <!-- <script src="https://unpkg.com/cytoscape@3.19.1/dist/cytoscape.min.js"></script> -->
-    <script src="https://d3js.org/d3.v6.min.js"></script>
-
+    <script src="/static/js/d3/d3.v7.js"></script>
   </head>
   <body>
     <div class="header" onclick="window.location.href='/'">
@@ -22,117 +19,131 @@
       <div id="menuGroup">
         <button onclick="window.location.href='/'">Full View</button>
       </div>
-
-      <h1>UNDER CONSTRUCTION :)</h1>
-
       <div id="cy"></div>
-
-      </div>
     </div>
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        const dashboard = document.getElementById('dashboard');
+        const dashboard = document.getElementById("dashboard");
         const width = dashboard.offsetWidth;
-        const height = window.innerHeight * 0.8;
+        const height = window.innerHeight;
 
-          fetch('/protocol_view')
-          .then(response => response.json())
-          .then(data => {
-              const nodes = data.nodes;
-              const links = data.links;
-      
-              const svg = d3.select('#dashboard').append('svg')
-            .attr('width', width)
-            .attr('height', height);
-      
-            const simulation = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(links).id(d => d.id).distance(200))  // Increase distance for better spread
-            .force("charge", d3.forceManyBody().strength(-400))  // Increase repulsive force for better spread
-            .force("center", d3.forceCenter(width / 2, height / 2));
-      
-              const link = svg.append("g")
-                  .attr("stroke", "#ccc")
-                  .attr("stroke-opacity", 0.6)
-                  .selectAll("line")
-                  .data(links)
-                  .join("line")
-                  .attr("stroke-width", d => Math.sqrt(d.value));
-      
-              const node = svg.append("g")
-                  .attr("stroke", "#fff")
-                  .attr("stroke-width", 1.5)
-                  .selectAll("circle")
-                  .data(nodes)
-                  .join("circle")
-                  .attr("r", 15)
-                  .attr("fill", "#0074D9")
-                  .call(drag(simulation));
-      
-              // Adding labels to each node
-              const labels = svg.append("g")
-                  .attr("class", "labels")
-                  .selectAll("text")
-                  .data(nodes)
-                  .join("text")
-                  .text(d => d.label)  // Assuming each node data has a 'label' field
-                  .attr("x", d => d.x + 10)
-                  .attr("y", d => d.y)
-                  .attr("font-family", "monospace")
-                  .attr("font-weight", "bold")
-                  .attr("font-size", 16)
-                  .attr("fill", "white");
-      
-              simulation.on("tick", () => {
-                  link
-                      .attr("x1", d => d.source.x)
-                      .attr("y1", d => d.source.y)
-                      .attr("x2", d => d.target.x)
-                      .attr("y2", d => d.target.y);
-      
-                  node
-                      .attr("cx", d => d.x)
-                      .attr("cy", d => d.y);
-      
-                  labels
-                      .attr("x", d => d.x + 10)
-                      .attr("y", d => d.y);
-              });
-      
-              function colorNode(d) {
-                  return d.group === 1 ? 'red' : 'blue';
-              }
-      
-              function drag(simulation) {
-                  function dragstarted(event) {
-                      if (!event.active) simulation.alphaTarget(0.3).restart();
-                      event.subject.fx = event.subject.x;
-                      event.subject.fy = event.subject.y;
-                  }
-                  
-                  function dragged(event) {
-                      event.subject.fx = event.x;
-                      event.subject.fy = event.y;
-                  }
-                  
-                  function dragended(event) {
-                      if (!event.active) simulation.alphaTarget(0);
-                      event.subject.fx = null;
-                      event.subject.fy = null;
-                  }
-                  
-                  return d3.drag()
-                      .on("start", dragstarted)
-                      .on("drag", dragged)
-                      .on("end", dragended);
-              }
-      
+        fetch("/protocol_view")
+          .then((response) => response.json())
+          .then((data) => {
+            const nodes = data.nodes;
+            const links = data.links;
+
+            // Identify connected and unconnected nodes
+            const connectedNodeIds = new Set(
+              links.flatMap((link) => [link.source, link.target])
+            );
+
+            nodes.forEach((node) => {
+              node.connected = connectedNodeIds.has(node.id);
+            });
+
+            const svg = d3
+              .select("#dashboard")
+              .append("svg")
+              .attr("width", width)
+              .attr("height", height);
+
+            // Apply forces: stronger repulsion among connected nodes, and custom placement for unconnected nodes
+            const simulation = d3
+              .forceSimulation(nodes)
+              .force(
+                "link",
+                d3
+                  .forceLink(links)
+                  .id((d) => d.id)
+                  .distance(200)
+              )
+              .force(
+                "charge",
+                d3.forceManyBody().strength((d) => (d.connected ? -1000 : -3000))
+              ) // Adjust repulsion among all nodes
+              .force("center", d3.forceCenter(width / 2, height / 2)) // Center force affects all nodes
+              .force(
+                "x",
+                d3
+                  .forceX((d) => (d.connected ? width / 1 : width * 0.9))
+                  .strength((d) => (d.connected ? 0.02 : 4))
+              ) // Push unconnected nodes to the left
+              .force(
+                "y",
+                d3
+                  .forceY((d) => (d.connected ? height / 2 : height * 0.4))
+                  .strength((d) => (d.connected ? 0.05 : 1))
+              ); // Slightly lower center for unconnected nodes
+
+            const link = svg
+              .append("g")
+              .attr("stroke", "#ccc")
+              .attr("stroke-opacity", 0.6)
+              .selectAll("line")
+              .data(links)
+              .join("line")
+              .attr("stroke-width", 2);
+
+            const node = svg
+              .append("g")
+              .selectAll("circle")
+              .data(nodes)
+              .join("circle")
+              .attr("r", 15)
+              .attr("fill", "#0074D9")
+              .call(drag(simulation));
+
+            const labels = svg
+              .append("g")
+              .selectAll("text")
+              .data(nodes)
+              .join("text")
+              .text((d) => d.label)
+              .attr("x", 15)
+              .attr("y", "0.31em")
+              .attr("font-family", "monospace")
+              .attr("font-weight", "bold")
+              .attr("font-size", 14)
+              .attr("fill", "black");
+
+            simulation.on("tick", () => {
+              link
+                .attr("x1", (d) => d.source.x)
+                .attr("y1", (d) => d.source.y)
+                .attr("x2", (d) => d.target.x)
+                .attr("y2", (d) => d.target.y);
+
+              node
+                .attr("cx", (d) => Math.max(15, Math.min(width - 15, d.x)))
+                .attr("cy", (d) => Math.max(15, Math.min(height - 15, d.y)));
+
+              labels.attr("x", (d) => d.x + 20).attr("y", (d) => d.y + 15);
+            });
+
+            function drag(simulation) {
+              return d3
+                .drag()
+                .on("start", function (event) {
+                  if (!event.active) simulation.alphaTarget(0.3).restart();
+                  event.subject.fx = event.subject.x;
+                  event.subject.fy = event.subject.y;
+                })
+                .on("drag", function (event) {
+                  event.subject.fx = event.x;
+                  event.subject.fy = event.y;
+                })
+                .on("end", function (event) {
+                  if (!event.active) simulation.alphaTarget(0);
+                  event.subject.fx = null;
+                  event.subject.fy = null;
+                });
+            }
           })
-          .catch(function(error) {
-              console.error('Error fetching data:', error);
+          .catch(function (error) {
+            console.error("Error fetching data:", error);
           });
       });
-      </script>
-      
-      
+    </script>
   </body>
 </html>
