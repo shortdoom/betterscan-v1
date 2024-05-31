@@ -37,6 +37,7 @@
             const connectedNodeIds = new Set(
               links.flatMap((link) => [link.source, link.target])
             );
+
             nodes.forEach((node) => {
               node.connected = connectedNodeIds.has(node.id);
             });
@@ -44,10 +45,11 @@
             const svg = d3
               .select("#dashboard")
               .append("svg")
+              .attr("class", "network-svg") // Adding a class for specific styling
               .attr("width", width)
               .attr("height", height);
 
-            const radius = 150; // Adjust radius as needed
+            const radius = 150;
 
             // Apply forces
             const simulation = d3
@@ -57,7 +59,7 @@
                 d3
                   .forceLink(links)
                   .id((d) => d.id)
-                  .distance(200)
+                  .distance(150)
               )
               .force(
                 "charge",
@@ -78,21 +80,20 @@
             // Visualization elements setup (node, link, labels)
             const link = svg
               .append("g")
-              .attr("stroke", "#ccc")
-              .attr("stroke-opacity", 0.6)
+              .attr("stroke", "black")
+              .attr("stroke-opacity", 0.5)
               .selectAll("line")
               .data(links)
               .join("line")
-              .attr("stroke-width", 2);
+              .attr("stroke-width", 1);
 
             const node = svg
               .append("g")
               .selectAll("circle")
               .data(nodes)
               .join("circle")
-              .attr("r", 15)
-              .attr("fill", "#0074D9")
-              .attr("fill", d => d.connected ? "#FF4136" : "#0074D9") // Blue for connected, red for unconnected
+              .attr("r", 10)
+              .attr("fill", (d) => (d.connected ? "red" : "white"))
               .call(drag(simulation));
 
             const labels = svg
@@ -108,22 +109,33 @@
               .attr("font-size", 14)
               .attr("fill", "black");
 
-            // Update function for simulation 'tick'
             simulation.on("tick", () => {
+              let maxY = 0;
+              let minY = Infinity;
               link
                 .attr("x1", (d) => d.source.x)
                 .attr("y1", (d) => d.source.y)
                 .attr("x2", (d) => d.target.x)
                 .attr("y2", (d) => d.target.y);
 
+              // Update positions
               node
                 .attr("cx", (d) => Math.max(15, Math.min(width - 15, d.x)))
-                .attr("cy", (d) => Math.max(15, Math.min(height - 15, d.y)));
+                .attr("cy", (d) => {
+                  maxY = Math.max(maxY, d.y + 15); // Include radius of node
+                  minY = Math.min(minY, d.y - 15); // Include radius of node
+                  return Math.max(15, Math.min(height - 15, d.y));
+                });
 
               labels.attr("x", (d) => d.x + 20).attr("y", (d) => d.y + 15);
+
+              // Dynamically adjust SVG height to fit nodes
+              const neededHeight = maxY - minY + 30; // Adding some padding
+              if (neededHeight > height) {
+                svg.attr("height", neededHeight);
+              }
             });
 
-            // Drag behavior setup
             function drag(simulation) {
               return d3
                 .drag()

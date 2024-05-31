@@ -23,6 +23,7 @@ body {
   ); /* silver with 50% opacity 192,192,192 */
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   display: block; /* Ensures default block layout for direct children */
+  overflow: auto; /* Adjust to manage overflow from the SVG if it gets too large */
   font: 14px / normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Source Code Pro', 'source-code-pro', monospace
 }
 
@@ -695,4 +696,16 @@ form label {
   justify-content: flex-end;
   margin-bottom: 5px;
   gap: 5px;
+}
+
+/* ================================ */
+/* Styles for the protocol view     */
+/* ================================ */
+
+.network-svg {
+  display: block; /* Ensures the SVG does not have extra space below it */
+  max-width: 100%; /* Prevents the SVG from extending beyond its container */
+  height: auto; /* Adjust height dynamically with JavaScript if needed */
+  border: 2px solid #ffffff;
+  margin: 0 auto; /* Centers SVG in the dashboard if smaller than full width */
 }
