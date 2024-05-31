@@ -37,7 +37,6 @@
             const connectedNodeIds = new Set(
               links.flatMap((link) => [link.source, link.target])
             );
-
             nodes.forEach((node) => {
               node.connected = connectedNodeIds.has(node.id);
             });
@@ -48,7 +47,9 @@
               .attr("width", width)
               .attr("height", height);
 
-            // Apply forces: stronger repulsion among connected nodes, and custom placement for unconnected nodes
+            const radius = 150; // Adjust radius as needed
+
+            // Apply forces
             const simulation = d3
               .forceSimulation(nodes)
               .force(
@@ -60,22 +61,21 @@
               )
               .force(
                 "charge",
-                d3.forceManyBody().strength((d) => (d.connected ? -1000 : -3000))
-              ) // Adjust repulsion among all nodes
-              .force("center", d3.forceCenter(width / 2, height / 2)) // Center force affects all nodes
+                d3.forceManyBody().strength((d) => -500)
+              ) // Unified repulsion strength
+              .force("center", d3.forceCenter(width / 2, height / 2)) // General center force
               .force(
-                "x",
+                "radial",
                 d3
-                  .forceX((d) => (d.connected ? width / 1 : width * 0.9))
-                  .strength((d) => (d.connected ? 0.02 : 4))
-              ) // Push unconnected nodes to the left
-              .force(
-                "y",
-                d3
-                  .forceY((d) => (d.connected ? height / 2 : height * 0.4))
-                  .strength((d) => (d.connected ? 0.05 : 1))
-              ); // Slightly lower center for unconnected nodes
+                  .forceRadial(
+                    (d) => (d.connected ? 0 : radius),
+                    width / 2,
+                    height / 2
+                  )
+                  .strength((d) => (d.connected ? 0 : 0.1))
+              ); // Radial force for unconnected
 
+            // Visualization elements setup (node, link, labels)
             const link = svg
               .append("g")
               .attr("stroke", "#ccc")
@@ -92,6 +92,7 @@
               .join("circle")
               .attr("r", 15)
               .attr("fill", "#0074D9")
+              .attr("fill", d => d.connected ? "#FF4136" : "#0074D9") // Blue for connected, red for unconnected
               .call(drag(simulation));
 
             const labels = svg
@@ -107,6 +108,7 @@
               .attr("font-size", 14)
               .attr("fill", "black");
 
+            // Update function for simulation 'tick'
             simulation.on("tick", () => {
               link
                 .attr("x1", (d) => d.source.x)
@@ -121,6 +123,7 @@
               labels.attr("x", (d) => d.x + 20).attr("y", (d) => d.y + 15);
             });
 
+            // Drag behavior setup
             function drag(simulation) {
               return d3
                 .drag()
