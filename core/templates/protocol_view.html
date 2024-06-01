@@ -16,16 +16,36 @@
       <h1>┗┫⦀⦙ｂｅｔｔｅｒｓｃａｎ⦙⦀┣┛</h1>
     </div>
     <div id="dashboard">
+      <div id="inputDropdownFlex">
+        <div id="inputGroup">
+          <input
+            type="text"
+            id="pathInput"
+            placeholder="<network>:<address> or explorer url"
+            style="width: 450px"
+          />
+          <input
+            type="text"
+            id="paramInput"
+            placeholder="optional: api/contract_name"
+            style="color: #fff"
+          />
+          <button onclick="loadData()">Load</button>
+        </div>
+        <div id="dropdownContainer"></div>
+      </div>
       <div id="menuGroup">
         <button onclick="window.location.href='/'">Full View</button>
       </div>
       <div id="cy"></div>
     </div>
     <script>
+
       document.addEventListener("DOMContentLoaded", function () {
+        populateSessionStorageDropdown();
         const dashboard = document.getElementById("dashboard");
         const width = dashboard.offsetWidth;
-        const height = window.innerHeight;
+        let height = window.innerHeight;
 
         fetch("/protocol_view")
           .then((response) => response.json())
@@ -33,7 +53,6 @@
             const nodes = data.nodes;
             const links = data.links;
 
-            // Identify connected and unconnected nodes
             const connectedNodeIds = new Set(
               links.flatMap((link) => [link.source, link.target])
             );
@@ -45,13 +64,24 @@
             const svg = d3
               .select("#dashboard")
               .append("svg")
-              .attr("class", "network-svg") // Adding a class for specific styling
+              .attr("class", "network-svg")
               .attr("width", width)
               .attr("height", height);
 
-            const radius = 150;
+            svg
+              .append("defs")
+              .append("marker")
+              .attr("id", "arrow")
+              .attr("viewBox", "0 -5 10 10")
+              .attr("refX", 25)
+              .attr("refY", 0)
+              .attr("markerWidth", 6)
+              .attr("markerHeight", 6)
+              .attr("orient", "auto-start-reverse")
+              .append("path")
+              .attr("d", "M0,-5L10,0L0,5")
+              .attr("fill", "#000");
 
-            // Apply forces
             const simulation = d3
               .forceSimulation(nodes)
               .force(
@@ -64,28 +94,27 @@
               .force(
                 "charge",
                 d3.forceManyBody().strength((d) => -500)
-              ) // Unified repulsion strength
-              .force("center", d3.forceCenter(width / 2, height / 2)) // General center force
+              )
+              .force("center", d3.forceCenter(width / 2, height / 2))
               .force(
                 "radial",
                 d3
                   .forceRadial(
-                    (d) => (d.connected ? 0 : radius),
+                    (d) => (d.connected ? 0 : 150),
                     width / 2,
                     height / 2
                   )
                   .strength((d) => (d.connected ? 0 : 0.1))
-              ); // Radial force for unconnected
+              );
 
-            // Visualization elements setup (node, link, labels)
             const link = svg
               .append("g")
-              .attr("stroke", "black")
-              .attr("stroke-opacity", 0.5)
+              .attr("stroke", "#999")
               .selectAll("line")
               .data(links)
               .join("line")
-              .attr("stroke-width", 1);
+              .attr("stroke-width", 2)
+              .attr("marker-end", "url(#arrow)");
 
             const node = svg
               .append("g")
@@ -118,21 +147,26 @@
                 .attr("x2", (d) => d.target.x)
                 .attr("y2", (d) => d.target.y);
 
-              // Update positions
               node
-                .attr("cx", (d) => Math.max(15, Math.min(width - 15, d.x)))
-                .attr("cy", (d) => {
-                  maxY = Math.max(maxY, d.y + 15); // Include radius of node
-                  minY = Math.min(minY, d.y - 15); // Include radius of node
-                  return Math.max(15, Math.min(height - 15, d.y));
-                });
+                .each(function (d) {
+                  d.x = Math.max(15, Math.min(width - 15, d.x));
+                  d.y = Math.max(15, Math.min(height - 15, d.y));
+                })
+                .attr("cx", (d) => d.x)
+                .attr("cy", (d) => d.y);
 
               labels.attr("x", (d) => d.x + 20).attr("y", (d) => d.y + 15);
 
-              // Dynamically adjust SVG height to fit nodes
-              const neededHeight = maxY - minY + 30; // Adding some padding
+              maxY = Math.max(maxY, ...node.data().map((d) => d.y + 15));
+              minY = Math.min(minY, ...node.data().map((d) => d.y - 15));
+              const neededHeight = maxY - minY + 30;
               if (neededHeight > height) {
-                svg.attr("height", neededHeight);
+                height = neededHeight;
+                svg.attr("height", height);
+                simulation
+                  .force("center", d3.forceCenter(width / 2, height / 2))
+                  .alpha(0.3)
+                  .restart();
               }
             });
 
@@ -159,6 +193,54 @@
             console.error("Error fetching data:", error);
           });
       });
+
+      function jumpToSession(session_path) {
+        window.history.pushState(
+          session_path,
+          "",
+          `/?session_id=${session_path}`
+        );
+        // initializeLoadData(session_path);
+      }
+
+      function populateSessionStorageDropdown() {
+        var select = document.createElement("select");
+        select.id = "keysDropdown";
+
+        select.onchange = function () {
+          jumpToSession(select.value);
+        };
+
+        var defaultOption = document.createElement("option");
+        defaultOption.text = "Select a session";
+        select.appendChild(defaultOption);
+
+        fetch("/list_sessions")
+          .then((response) => {
+            if (!response.ok) {
+              return response.text().then((text) => {
+                throw new Error(text);
+              });
+            }
+            return response.json();
+          })
+          .then((directories) => {
+            Object.entries(directories).forEach(([directory]) => {
+              var option = document.createElement("option");
+              var parts = directory.split(":");
+              option.value = parts.slice(0, 2).join(":");
+              option.text = directory;
+              select.appendChild(option);
+            });
+          })
+          .catch((error) => {
+            console.error("Error fetching files/out directories:", error);
+          });
+
+        var container = document.getElementById("dropdownContainer");
+        container.innerHTML = "";
+        container.appendChild(select);
+      }
     </script>
   </body>
 </html>
