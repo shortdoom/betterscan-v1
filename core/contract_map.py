@@ -32,10 +32,10 @@ def find_all_session_data_paths():
     dirs = os.listdir(base_path)
     session_data_paths = []
     for dir_name in dirs:
-        
+
         if os.path.isfile(os.path.join(base_path, dir_name)):
             continue
-        
+
         session_data_path = os.path.join(base_path, dir_name, "sessionData.json")
         if os.path.isfile(session_data_path):
             session_data_paths.append(session_data_path)
@@ -109,10 +109,9 @@ class ContractMapScan:
         self.session_external_addresses = []
         self.session_external_addresses_paths = {}
         self.contract_interactions = defaultdict(list)
-        self.graph = nx.DiGraph() 
-        self.session_details = {} 
-        
-            
+        self.graph = nx.DiGraph()
+        self.session_details = {}
+
     # Scans all of the files/out for external calls to the same addresses
     # NOTE: assumption is that files/out has relevant sessionData.json files
     def get_common_external_protocol(self):
@@ -143,55 +142,59 @@ class ContractMapScan:
                     external_addresses_paths[name] = session_found
 
             self.session_external_addresses_paths = external_addresses_paths
-            
+
     def gen_protocol_graph(self):
         for path in self.session_data_paths:
             session_data = load_source(path)
-            target_address = session_data.get("network_info", {}).get("contract_address", "")
-            target_contract = session_data.get("network_info", {}).get("contract_name", "")
-            target_address_external_calls = session_data.get("contract_data", {}).get("external_addresses", {})
-            self.graph.add_node(target_address, label=target_contract)
-        
-            for external_contract_name, external_address in target_address_external_calls.items():
-                self.graph.add_node(external_address, label=external_contract_name)
-                self.graph.add_edge(target_address, external_address)       
-        
+            target_address = session_data.get("network_info", {}).get(
+                "contract_address", ""
+            )
+            target_contract = session_data.get("network_info", {}).get(
+                "contract_name", ""
+            )
+            target_address_external_calls = session_data.get("contract_data", {}).get(
+                "external_addresses", {}
+            )
+            self.graph.add_node(
+                target_address, label=target_contract, address=target_address
+            )
+
+            for (
+                external_contract_name,
+                external_address,
+            ) in target_address_external_calls.items():
+                self.graph.add_node(
+                    external_address,
+                    label=external_contract_name,
+                    address=external_address,
+                )
+                self.graph.add_edge(target_address, external_address)
+
                 if external_address not in self.session_details:
                     self.session_details[external_address] = path
-                    
-                
+
     def visualize_graph(self):
-        A = nx.nx_agraph.to_agraph(self.graph)  # Convert to a PyGraphviz graph
-    
-        # Set Graphviz layout options
+        A = nx.nx_agraph.to_agraph(self.graph)
+
         A.graph_attr.update(
             {
-                'splines': 'spline',  # Use splines for edge curves
-                'rankdir': 'LR',  # Left to right graph layout
-                'nodesep': '0.75',  # Increase node separation
-                'ranksep': '1.2',  # Increase rank separation
+                "splines": "spline",
+                "rankdir": "LR",
+                "nodesep": "0.75",
+                "ranksep": "1.2",
             }
         )
-    
-        # You might try using a different layout if 'dot' isn't working well.
-        A.layout('fdp')  # Other options: 'neato', 'fdp', 'sfdp', 'twopi'
-        
-        graph_path = os.path.join(base_path, 'network_graph.png')
-        A.draw(graph_path)  # Draw graph to a file
-        
+
+        A.layout("fdp")
+
+        graph_path = os.path.join(base_path, "network_graph.png")
+        A.draw(graph_path)
+
         print("Graph has been saved as 'network_graph.png'")
-
-
-        
-    def export_address_to_session_mapping(self):
-        # Exporting the address-to-session mapping as a JSON file
-        with open(f"{base_path}/address_to_session_mapping.json", 'w') as f:
-            json.dump(self.session_details, f, indent=4)
 
     def run(self):
         self.gen_protocol_graph()
         self.visualize_graph()
-        self.export_address_to_session_mapping() 
 
 
 class ContractMap:

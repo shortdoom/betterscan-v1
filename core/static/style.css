@@ -709,3 +709,10 @@ form label {
   border: 2px solid #ffffff;
   margin: 0 auto; /* Centers SVG in the dashboard if smaller than full width */
 }
+
+.tooltip {
+  pointer-events: none;
+  opacity: 0.9;
+  font-size: 12px;
+  color: #333;
+}
