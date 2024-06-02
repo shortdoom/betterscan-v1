@@ -10,6 +10,7 @@
     />
     <link rel="stylesheet" href="/static/default.min.css" />
     <script src="/static/js/d3/d3.v7.js"></script>
+    <script type="module" src="/static/js/components/protocol_page.js"></script>
   </head>
   <body>
     <div class="header" onclick="window.location.href='/'">
@@ -19,6 +20,7 @@
       <div id="menuGroup">
         <button onclick="window.location.href='/'">Full View</button>
       </div>
+      <div id="dropdownContainer"></div>
       <div id="cy"></div>
     </div>
     <script>
@@ -119,8 +121,8 @@
                 // Display the additional info when a node is clicked
                 tooltip
                   .html("address: " + d.address)
-                  .style("visibility", "visible") 
-                  .style("left", event.pageX + 10 + "px") 
+                  .style("visibility", "visible")
+                  .style("left", event.pageX + 10 + "px")
                   .style("top", event.pageY + 10 + "px");
               });
 
