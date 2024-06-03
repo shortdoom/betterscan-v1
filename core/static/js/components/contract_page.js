@@ -15,7 +15,6 @@ import {
 
 document.addEventListener("DOMContentLoaded", function () {
   hljs.highlightAll();
-  // initializePageWithData();
   populateSessionStorageDropdown();
 
   const urlParams = new URLSearchParams(window.location.search);

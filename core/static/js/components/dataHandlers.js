@@ -6,7 +6,7 @@ import {
 } from "./ui.js";
 
 import { initializeLoadData } from "./navigation.js";
-import { sortPath, getSessionData, initScanDropdowns } from "./utils.js";
+import { sortPath, getSessionData, initScanDropdowns, getTargetFromUrl } from "./utils.js";
 
 export var selectedActionTargets = [];
 
