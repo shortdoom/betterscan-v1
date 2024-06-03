@@ -49,33 +49,15 @@
       </div>
 
       <div id="menuGroup">
+        <!-- <h2 id="homepage-headers">█ v0.2 █</h2> -->
         <button id="openTargetsButton">Targets</button>
-        <button id="reportButton">Report</button>
         <button id="clearDataButton">Clean Storage</button>
+        <button id="reportButton">Report</button>
         <button id="protocolViewButton">ProtocolView</button>
       </div>
 
-      <div id="homepage">
-        <h2 id="homepage-headers">█ Betterscan v0.2 █</h2>
-        <p>
-          Betterscan is a security tool designed to parse, analyze, and display
-          data of any smart contract deployed to any EVM network. It provides a
-          visual representation of the contract's source code and its
-          dependencies, along with additional data. The tool allows you to
-          search for specific functions, variables, and contracts while also
-          finding intersections within all data. You can run automatic detectors
-          on the target contract and filter the results based on impact and
-          check type.
-        </p>
-        <h3 id="homepage-headers">~Workspace map~</h3>
-        <p>
-          Visual representation of your files/out contents. Each node is a smart
-          contract deployed to an unique EVM address. A link between nodes
-          represents an external call between contracts. Arrows show the
-          direction of the call. Click on a node to see the additional data.
-          Unconnected nodes do not call any other contract. Nodes represented in
-          white are libraries.
-        </p>
+      <div id="rootPageDisplay">
+        <h2 id="homepage-headers">█ v0.2 █</h2>
         <div id="protocol_viz"></div>
         <p style="text-align: right">
           <a

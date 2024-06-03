@@ -6,7 +6,12 @@ import {
 } from "./ui.js";
 
 import { initializeLoadData } from "./navigation.js";
-import { sortPath, getSessionData, initScanDropdowns, getTargetFromUrl } from "./utils.js";
+import {
+  sortPath,
+  getSessionData,
+  initScanDropdowns,
+  getTargetFromUrl,
+} from "./utils.js";
 
 export var selectedActionTargets = [];
 
@@ -67,12 +72,12 @@ export function loadData() {
         document.getElementById("searchDisplay").style.display = "block";
         document.getElementById("criteriaDisplay").style.display = "block";
         createSourceCodeView(data.source_code);
-        document.getElementById("homepage").style.display = "none";
+        document.getElementById("rootPageDisplay").style.display = "none";
         button.textContent = "Load";
       })
       .catch((error) => {
         console.error("Error:", error);
-        document.getElementById("homepage").style.display = "none";
+        document.getElementById("rootPageDisplay").style.display = "none";
         document.getElementById("functionDisplay").innerHTML =
           "<strong>Wrong Input:</strong> " + error.message;
       });
@@ -89,7 +94,7 @@ export function filterData() {
   // Ugly hack because we wrap everything in <form>> in html
   delete searchCriteria["findAction[]"];
   delete searchCriteria["findTarget[]"];
-  console.log("filterData -> searchCriteria", searchCriteria)
+  console.log("filterData -> searchCriteria", searchCriteria);
   for (let key in searchCriteria) {
     if (searchCriteria[key] === "") {
       delete searchCriteria[key];
@@ -204,8 +209,7 @@ export function updateCriteriaDisplay() {
   });
 
   document.getElementById("criteriaDisplay").innerHTML = criteriaText;
-  document.getElementById("criteriaDisplay").style.display = 'block';
-
+  document.getElementById("criteriaDisplay").style.display = "block";
 }
 
 export function populateTargets(actions) {

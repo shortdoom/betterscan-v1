@@ -108,7 +108,7 @@ export function initializePageWithData() {
       document.getElementById("searchDisplay").style.display = "block";
       document.getElementById("criteriaDisplay").style.display = "block";
       createSourceCodeView(sessionData.source_code);
-      document.getElementById("homepage").style.display = "none";
+      document.getElementById("rootPageDisplay").style.display = "none";
     } else {
       console.log("Session data not found for ID:", sessionID);
       initializeFileData(path);
@@ -118,7 +118,7 @@ export function initializePageWithData() {
 
 export function initializeLoadData(path) {
   const localData = JSON.parse(localStorage.getItem(path));
-  console.log("Local data found for ID:", path, localData)
+  console.log("Local data found for ID:", path, localData);
   if (localData) {
     displayScanResultsSection(localData.scan_results);
     initScanDropdowns();
@@ -133,7 +133,7 @@ export function initializeLoadData(path) {
     document.getElementById("searchDisplay").style.display = "block";
     document.getElementById("criteriaDisplay").style.display = "block";
     createSourceCodeView(localData.source_code);
-    document.getElementById("homepage").style.display = "none";
+    document.getElementById("rootPageDisplay").style.display = "none";
   } else {
     console.log("Session data not found for ID:", path);
     initializeFileData(path);

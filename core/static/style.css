@@ -24,7 +24,8 @@ body {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   display: block; /* Ensures default block layout for direct children */
   overflow: auto; /* Adjust to manage overflow from the SVG if it gets too large */
-  font: 14px / normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Source Code Pro', 'source-code-pro', monospace
+  font: 14px / normal "Monaco", "Menlo", "Ubuntu Mono", "Consolas",
+    "Source Code Pro", "source-code-pro", monospace;
 }
 
 .header {
@@ -60,7 +61,7 @@ body {
     font-size: 14px;
   }
 
-  .function-content{
+  .function-content {
     padding: 8px;
     margin: 5px auto;
     max-width: 100%; /* Adjust for smaller screens */
@@ -88,8 +89,8 @@ body {
 }
 
 #functionDisplay {
-  position: sticky;  /* Make the div stick within its container */
-  top: 0;            /* Set the top of the div to stay at 0px from the top of the viewport when scrolling */
+  position: sticky; /* Make the div stick within its container */
+  top: 0; /* Set the top of the div to stay at 0px from the top of the viewport when scrolling */
   flex: 1;
   min-width: 0; /* Prevents flex items from overflowing */
   padding: 10px;
@@ -99,7 +100,6 @@ body {
   height: calc(100vh - 40px); /* Optional: Adjust the height as needed */
   margin-top: 20px; /* Ensure there's space from the top of the viewport or any fixed element */
 }
-
 
 /* Style adjustments for the dropdown */
 select {
@@ -133,6 +133,8 @@ button {
   background-color: #fff;
   color: #333;
   font-size: 16px;
+  font: 14px / normal "Monaco", "Menlo", "Ubuntu Mono", "Consolas",
+    "Source Code Pro", "source-code-pro", monospace;
 }
 
 button:hover {
@@ -208,7 +210,8 @@ button:hover {
   text-align: left;
   outline: none;
   /* font-size: 16px; */
-  font: 12px / normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Source Code Pro', 'source-code-pro', monospace;
+  font: 12px / normal "Monaco", "Menlo", "Ubuntu Mono", "Consolas",
+    "Source Code Pro", "source-code-pro", monospace;
 }
 
 .collapsible:hover {
@@ -305,7 +308,6 @@ button:hover {
   overflow-x: auto; /* Add horizontal scroll for overflow */
 }
 
-
 .copy-button {
   padding: 8px;
   margin-left: 10px;
@@ -372,7 +374,6 @@ form label {
   white-space: nowrap; /* Prevents labels from wrapping */
 }
 
-
 .select-group {
   display: flex;
   flex-direction: column; /* Aligns the label above the select box */
@@ -423,7 +424,6 @@ form label {
   margin: 5px;
   color: #000;
 }
-
 
 #searchForm #resetSelectionsButton,
 #searchForm #filterDataButton {
@@ -521,7 +521,7 @@ form label {
   margin-left: 10px;
 }
 
-#scanResultFilterForm label{
+#scanResultFilterForm label {
   font-weight: bold;
   letter-spacing: 2px;
   text-transform: lowercase;

@@ -59,9 +59,9 @@ const filterScanResultsButton = document.getElementById(
 const toggleScanResultsButton = document.getElementById(
   "toggleScanResultsButton"
 );
-const criteriaDisplay = document.getElementById("criteriaDisplay");
+const searchForm = document.getElementById("searchForm");
 
-criteriaDisplay.addEventListener("change", updateCriteriaDisplay);
+searchForm.addEventListener("change", updateCriteriaDisplay);
 
 resetButton.addEventListener("click", function (event) {
   event.preventDefault();
@@ -69,17 +69,17 @@ resetButton.addEventListener("click", function (event) {
 });
 
 searchButton.addEventListener("click", function (event) {
-  event.preventDefault(); 
+  event.preventDefault();
   filterData();
 });
 
 filterScanResultsButton.addEventListener("click", function (event) {
-  event.preventDefault(); 
+  event.preventDefault();
   filterScanResults();
 });
 
 toggleScanResultsButton.addEventListener("click", function (event) {
-  event.preventDefault(); 
+  event.preventDefault();
   toggleScanResultsDisplay();
 });
 

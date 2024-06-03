@@ -1,4 +1,4 @@
-export function createProtocolMap(target_div="#dashboard") {
+export function createProtocolMap(target_div = "#dashboard") {
   const dashboard = document.getElementById("dashboard");
   const width = dashboard.offsetWidth;
   let height = window.innerHeight;
@@ -148,6 +148,8 @@ export function createProtocolMap(target_div="#dashboard") {
         }
       });
 
+      addLegend(svg);
+
       function drag(simulation) {
         return d3
           .drag()
@@ -171,3 +173,76 @@ export function createProtocolMap(target_div="#dashboard") {
       console.error("Error fetching data:", error);
     });
 }
+
+function addLegend(svg) {
+    const legend = svg.append("g")
+      .attr("class", "legend")
+      .attr("transform", "translate(10, 10)"); // Positioning the legend on the SVG
+  
+    // Adding legend for node colors
+    const nodeColors = [
+      { color: "red", text: "Smart Contract" },
+      { color: "white", text: "Library" }
+    ];
+  
+    const nodeLegend = legend.selectAll(".node-legend")
+      .data(nodeColors)
+      .enter().append("g")
+      .attr("class", "node-legend")
+      .attr("transform", (d, i) => `translate(0, ${i * 25 + 10})`);  // Adjust vertical spacing between items
+  
+    nodeLegend.append("circle")
+      .attr("r", 10)
+      .attr("fill", d => d.color)
+      .attr("cx", 15); // Adjust circle x position to align with other elements
+  
+    nodeLegend.append("text")
+      .attr("x", 35) // Adjusting the text position to the right of the circle for better alignment
+      .attr("y", 5) // Aligning text in the middle of the circle
+      .text(d => d.text)
+      .attr("font-family", "monospace")
+      .attr("font-size", 14);
+  
+    // Adding legend for the arrows
+    legend.append("text")
+      .attr("x", 0)
+      .attr("y", 60)
+      .text("Arrow shows the direction of the call")
+      .attr("font-family", "monospace")
+      .attr("font-size", 14);
+  
+    legend.append("line")
+      .attr("x1", 0)
+      .attr("y1", 70)
+      .attr("x2", 30)
+      .attr("y2", 70)
+      .attr("stroke", "black")
+      .attr("stroke-width", 2)
+      .attr("marker-end", "url(#arrow)"); // Using the same arrow marker
+  
+    // Adding legend for the line representing external calls without arrows
+    legend.append("text")
+      .attr("x", 0)
+      .attr("y", 90)
+      .text("Link represents an external call between contracts")
+      .attr("font-family", "monospace")
+      .attr("font-size", 14);
+  
+    legend.append("line")
+      .attr("x1", 0)
+      .attr("y1", 100)
+      .attr("x2", 30)
+      .attr("y2", 100)
+      .attr("stroke", "blue")
+      .attr("stroke-width", 2); // Regular line without arrow
+
+
+    // Adding legend for the arrows
+    legend.append("text")
+      .attr("x", 0)
+      .attr("y", 120)
+      .text("Click on a node to see more details")
+      .attr("font-family", "monospace")
+      .attr("font-size", 14);
+  }
+  
