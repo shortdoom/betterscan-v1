@@ -20,7 +20,9 @@
     <script type="text/javascript">
       hljs.highlightAll();
     </script>
-    <script type="module" src="/static/js/components/contract_page.js"></script>
+    <script type="module" src="/static/js/components/index.js"></script>
+    <script type="module" src="/static/js/components/protocol_viz.js"></script>
+    <script src="/static/js/d3/d3.v7.js"></script>
   </head>
   <body>
     <div class="header" onclick="window.location.href='/'">
@@ -54,92 +56,27 @@
       </div>
 
       <div id="homepage">
-        <h2 id="homepage-headers">█ Betterscan v0.1 █</h2>
+        <h2 id="homepage-headers">█ Betterscan v0.2 █</h2>
         <p>
           Betterscan is a security tool designed to parse, analyze, and display
-          data of any EVM-based smart contracts. It provides a visual
-          representation of the contract's source code and its dependencies,
-          along with additional data. The tool allows you to search for specific
-          functions, variables, and contracts while also finding intersections
-          within all data. You can run automatic detectors on the target
-          contract and filter the results based on impact and check type.
-          Betterscan uses localStorage for session storage, enabling you to save
-          and load multiple contract data in the same browser.
+          data of any smart contract deployed to any EVM network. It provides a
+          visual representation of the contract's source code and its
+          dependencies, along with additional data. The tool allows you to
+          search for specific functions, variables, and contracts while also
+          finding intersections within all data. You can run automatic detectors
+          on the target contract and filter the results based on impact and
+          check type.
         </p>
-        <h3 id="homepage-headers">~Features~</h3>
-        <ul>
-          <li>Out-of-the-box compilation of etherscan verified source code</li>
-          <li>
-            Inspect details of contracts, functions, variables, internal and
-            external calls, modifiers, expressions, low-level calls, inline
-            assembly, and more
-          </li>
-          <li>
-            Advanced search in source code and other data using multiple
-            pre-defined filters
-          </li>
-          <li>Makes solc compilation artifacts human readable</li>
-          <li>Quick-navigate to the most relevant data</li>
-          <li>
-            Automatic Slither, slitherin and semgrep detectors run on the target
-            contract
-          </li>
-          <li>Fast prompt generation for specific function flows</li>
-          <li>Keep multiple workspaces open in browser with Localstorage</li>
-        </ul>
-        <h3 id="homepage-headers">~Usage~</h3>
+        <h3 id="homepage-headers">~Workspace map~</h3>
         <p>
-          In the input field next to the "Load" button, enter: network:0x...,
-          where the network can be mainnet, ropsten, kovan, rinkeby, goerli,
-          tobalaba, arbi, testnet.arbi, poly, avax, testnet.avax, ftm, bsc, or
-          testnet.bsc.
+          Visual representation of your files/out contents. Each node is a smart
+          contract deployed to an unique EVM address. A link between nodes
+          represents an external call between contracts. Arrows show the
+          direction of the call. Click on a node to see the additional data.
+          Unconnected nodes do not call any other contract. Nodes represented in
+          white are libraries.
         </p>
-
-        <p>
-          Etherscan API key is optional. If left empty, global rate limits are
-          applied. If set, each etherscan platform has it's own unique key that
-          needs to match with target network.
-        </p>
-
-        <p>
-          Currently, only contracts with a verified source code on any (mainet,
-          arbi, opti etc.) of the Etherscan platforms are allowed as targets of
-          Betterscan.
-        </p>
-
-        <p>
-          Github integration and local directories integration is considered
-          experimental, works 50% of the time. If you are intending to download
-          and compile github repository, you'll need to specify the name of the
-          target contract in additional input box.
-        </p>
-
-        <p>
-          Once the target contract is loaded, a dashboard will appear. The
-          dashboard is divided into sections like network information, contract
-          data, state variables, detector results, search form, function data,
-          and source code data. Most of these sections allow for
-          cross-navigation and cross-searching (i.e., function data can be
-          filtered by detector results).
-        </p>
-
-        <p>
-          Betterscan uses localStorage for persistent session storage. You can
-          clear the session data by selecting the session from the dropdown and
-          setting the action to "Clear Data". You can also re-load a session by
-          entering the same network:address target. Or, you can jump to a
-          session by selecting it from the dropdown and setting the action to
-          "Jump To Session".
-        </p>
-        <h3 id="homepage-headers">~Coming Soon~</h3>
-        <p>
-          If you are interested in further development of Betterscan, contact me
-          on Twitter. There're a lot more potential features to add and focus of
-          this project is to stay open source. The UI is very hacky and needs a
-          lot of work. The code is also not very clean and needs refactoring. If
-          you are interested in adjusting this for your company requirements -
-          ping me (see the footnote)!
-        </p>
+        <div id="protocol_viz"></div>
         <p style="text-align: right">
           <a
             href="https://github.com/shortdoom"
@@ -250,10 +187,8 @@
               </select>
             </div>
           </div>
-
-          <!-- Add Reset Button inside the form, after the Search button -->
-          <button type="button" onclick="resetSelections()">Reset</button>
-          <button type="button" onclick="filterData()">Search</button>
+          <button id="resetSelectionsButton">Reset</button>
+          <button id="filterDataButton">Search</button>
         </form>
       </div>
       <div id="scanResultsSection" style="display: none">
@@ -285,14 +220,14 @@
             <select name="contract_scanned" id="contractSelect">
               <option value="">All</option>
             </select>
-            <button type="button" onclick="filterScanResults()">Show</button>
+            <button id="filterScanResultsButton">Show</button>
           </form>
-          <button onclick="toggleScanResultsDisplay()">X</button>
+          <button id="toggleScanResultsButton">X</button>
         </div>
         <div id="scanResultsDisplay"></div>
       </div>
 
-      <div id="criteriaDisplay" style="display: none"></div>
+      <div id="criteriaDisplay"></div>
 
       <div id="flexContainer">
         <div id="functionDisplay"></div>
@@ -301,7 +236,6 @@
     </div>
 
     <script>
-
       // Add event listener to the filter input for dynamic filtering
       document
         .getElementById("findTargetFilter")

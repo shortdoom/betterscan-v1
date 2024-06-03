@@ -424,7 +424,9 @@ form label {
   color: #000;
 }
 
-#searchForm button[type="button"] {
+
+#searchForm #resetSelectionsButton,
+#searchForm #filterDataButton {
   width: 100%;
   box-sizing: border-box; /* Ensures padding and border are included in the width */
 }
@@ -652,8 +654,8 @@ form label {
 /* ================================ */
 
 #homepage {
-  background-color: rgba(0, 0, 0, 0.5); /* white with 50% opacity */
-  color: rgb(255, 255, 255);
+  /* background-color: rgba(0, 0, 0, 0.5); */
+  /* color: rgb(255, 255, 255); */
   font-family: "Courier New", Courier, monospace;
   padding: 20px;
   margin-top: 10px;

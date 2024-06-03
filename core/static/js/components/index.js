@@ -1,6 +1,5 @@
 import {
   populateSessionStorageDropdown,
-  initializePageWithData,
   initializeLoadData,
   getActiveSession,
   clearData,
@@ -11,11 +10,19 @@ import {
   updateCriteriaDisplay,
   populateTargets,
   handleTargetSelection,
+  resetSelections,
+  filterData,
+  filterScanResults,
 } from "./dataHandlers.js";
+
+import { toggleScanResultsDisplay } from "./ui.js";
+
+import { createProtocolMap } from "./protocol_viz.js";
 
 document.addEventListener("DOMContentLoaded", function () {
   hljs.highlightAll();
   populateSessionStorageDropdown();
+  createProtocolMap("#protocol_viz");
 
   const urlParams = new URLSearchParams(window.location.search);
   const sessionID = urlParams.get("session_id");
@@ -44,9 +51,37 @@ document.addEventListener("DOMContentLoaded", function () {
     );
 });
 
-document
-  .getElementById("searchForm")
-  .addEventListener("change", updateCriteriaDisplay());
+const resetButton = document.getElementById("resetSelectionsButton");
+const searchButton = document.getElementById("filterDataButton");
+const filterScanResultsButton = document.getElementById(
+  "filterScanResultsButton"
+);
+const toggleScanResultsButton = document.getElementById(
+  "toggleScanResultsButton"
+);
+const criteriaDisplay = document.getElementById("criteriaDisplay");
+
+criteriaDisplay.addEventListener("change", updateCriteriaDisplay);
+
+resetButton.addEventListener("click", function (event) {
+  event.preventDefault();
+  resetSelections();
+});
+
+searchButton.addEventListener("click", function (event) {
+  event.preventDefault(); 
+  filterData();
+});
+
+filterScanResultsButton.addEventListener("click", function (event) {
+  event.preventDefault(); 
+  filterScanResults();
+});
+
+toggleScanResultsButton.addEventListener("click", function (event) {
+  event.preventDefault(); 
+  toggleScanResultsDisplay();
+});
 
 document.getElementById("findAction").addEventListener("change", function () {
   var actions = Array.from(this.selectedOptions).map((option) => option.value);

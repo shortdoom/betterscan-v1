@@ -11,10 +11,7 @@ import { sortPath, getSessionData, initScanDropdowns, getTargetFromUrl } from ".
 export var selectedActionTargets = [];
 
 export function loadData() {
-  // Get the button element
   var button = document.querySelector("#inputGroup button");
-
-  // Chan ge the button text to "Loading..."
   button.textContent = "Loading...";
 
   var path = document.getElementById("pathInput").value;
@@ -30,8 +27,6 @@ export function loadData() {
     }
   }
 
-  // localStorage is only used for single session storage
-  // otherwise send POST to download or retrive from local filesystem
   if (localStorage.getItem(path)) {
     window.history.pushState(path, "", `/?session_id=${path}`);
     initializeLoadData(path);
@@ -94,7 +89,7 @@ export function filterData() {
   // Ugly hack because we wrap everything in <form>> in html
   delete searchCriteria["findAction[]"];
   delete searchCriteria["findTarget[]"];
-
+  console.log("filterData -> searchCriteria", searchCriteria)
   for (let key in searchCriteria) {
     if (searchCriteria[key] === "") {
       delete searchCriteria[key];
@@ -209,6 +204,8 @@ export function updateCriteriaDisplay() {
   });
 
   document.getElementById("criteriaDisplay").innerHTML = criteriaText;
+  document.getElementById("criteriaDisplay").style.display = 'block';
+
 }
 
 export function populateTargets(actions) {
