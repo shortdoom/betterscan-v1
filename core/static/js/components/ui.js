@@ -1,4 +1,9 @@
-import { unescapeHTML, isEmpty, getSessionData, orderSourceCodeFiles } from "./utils.js";
+import {
+  unescapeHTML,
+  isEmpty,
+  getSessionData,
+  orderSourceCodeFiles,
+} from "./utils.js";
 import "../editor/ace.js";
 
 export var editor = null;
@@ -418,7 +423,7 @@ export function formatFunctionData(item) {
 
   // Append the "Go to Lines" button if line_numbers is available
   if (item.line_numbers) {
-    formattedData += `<button class="copy-button" onclick="gotoLinesInEditor('${item.contract_name}', ${item.line_numbers[0]}, ${item.line_numbers[1]})">Go to Lines</button>`;
+    formattedData += `<button class="copy-button" data-contract-name="${item.contract_name}" data-start-line="${item.line_numbers[0]}" data-end-line="${item.line_numbers[1]}">Go to Lines</button>`;
   }
 
   // Always add the "Copy" button last

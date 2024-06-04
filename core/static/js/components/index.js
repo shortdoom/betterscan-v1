@@ -15,7 +15,7 @@ import {
   filterScanResults,
 } from "./dataHandlers.js";
 
-import { toggleScanResultsDisplay } from "./ui.js";
+import { toggleScanResultsDisplay, gotoLinesInEditor } from "./ui.js";
 
 import { createProtocolMap } from "./protocol_viz.js";
 
@@ -81,6 +81,15 @@ filterScanResultsButton.addEventListener("click", function (event) {
 toggleScanResultsButton.addEventListener("click", function (event) {
   event.preventDefault();
   toggleScanResultsDisplay();
+});
+
+document.body.addEventListener('click', function(event) {
+  if (event.target.matches('.copy-button')) {
+    const contractName = event.target.getAttribute('data-contract-name');
+    const startLine = parseInt(event.target.getAttribute('data-start-line'), 10);
+    const endLine = parseInt(event.target.getAttribute('data-end-line'), 10);
+    gotoLinesInEditor(contractName, startLine, endLine);
+  }
 });
 
 document.getElementById("findAction").addEventListener("change", function () {
