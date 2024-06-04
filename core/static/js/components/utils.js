@@ -20,8 +20,8 @@ export const SUPPORTED_NETWORKS = {
 };
 
 export function getSessionData(session_path) {
-    return JSON.parse(localStorage.getItem(session_path));
-  }
+  return JSON.parse(localStorage.getItem(session_path));
+}
 
 export function isValidHttpUrl(string) {
   let url;
@@ -119,11 +119,6 @@ export function unescapeHTML(str) {
   const temp = document.createElement("div");
   temp.innerHTML = str;
   return temp.textContent || temp.innerText || "";
-}
-
-export function toggleExpandableActive(currentElement) {
-  // Allow expandable buttons to toggle without affecting others
-  currentElement.classList.toggle("active");
 }
 
 export function orderSourceCodeFiles(

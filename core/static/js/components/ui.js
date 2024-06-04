@@ -394,7 +394,7 @@ export function formatFunctionData(item) {
       formattedData += `<div class="list-data">${item[key]}</div>`;
     } else if (buttonKeys.includes(key)) {
       // Prepare expandable buttons HTML
-      expandableButtons += `<button class="expandable" data-content-id="${contentId}" onclick="toggleExpandableActive(this)">${key}</button>`;
+      expandableButtons += `<button class="expandable" data-content-id="${contentId}">${key}</button>`;
 
       if (key === "prompts") {
         let strategiesContent = `<div class="strategy-buttons-container">`;

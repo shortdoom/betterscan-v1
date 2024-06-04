@@ -710,6 +710,7 @@ form label {
   height: auto; /* Adjust height dynamically with JavaScript if needed */
   border: 2px solid #ffffff;
   margin: 0 auto; /* Centers SVG in the dashboard if smaller than full width */
+  background-color: #ffffffa6;
 }
 
 .tooltip {

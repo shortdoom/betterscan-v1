@@ -2,6 +2,7 @@ export function createProtocolMap(target_div = "#dashboard") {
   const dashboard = document.getElementById("dashboard");
   const width = dashboard.offsetWidth;
   let height = window.innerHeight;
+  let foldedHeight = 50;
   let isFolded = false; // State to track if the SVG is folded
 
   fetch("/protocol_view")
@@ -39,34 +40,46 @@ export function createProtocolMap(target_div = "#dashboard") {
         .attr("d", "M0,-5L10,0L0,5")
         .attr("fill", "#000");
 
+      const svgTitle = svg
+        .append("text")
+        .text("Protocol View")
+        .attr("x", 20)
+        .attr("y", 30)
+        .attr("font-family", "monospace")
+        .attr("font-weight", "bold")
+        .attr("opacity", 0.7)
+        .attr("font-size", 16);
+
       // Toggle button in SVG
       const toggleGroup = svg
         .append("g")
         .attr("class", "toggle-button")
         .style("cursor", "pointer")
-        .attr("transform", "translate(10, 10)");
+        .attr("transform", `translate(${width - 150}, 10)`);
 
       toggleGroup
         .append("rect")
-        .attr("width", 80)
+        .attr("width", 90)
         .attr("height", 20)
-        .attr("fill", "lightgray");
+        .attr("fill", "white")
+        .attr("stroke", "#333")
+        .attr("stroke-width", 2);
 
       const toggleText = toggleGroup
         .append("text")
-        .attr("x", 40)
+        .attr("x", 45)
         .attr("y", 15)
         .attr("text-anchor", "middle")
-        .text("Toggle");
+        .text("HideView");
 
       toggleGroup.on("click", () => {
-        if (svg.attr("height") > 100) {
-          svg.attr("height", 100); // Set a minimal height when folded
-          toggleText.text("Expand");
+        if (svg.attr("height") > 50) {
+          svg.attr("height", 50); // Set a minimal height when folded
+          toggleText.text("ExpandView");
           isFolded = true;
         } else {
           svg.attr("height", height); // Restore original height
-          toggleText.text("Toggle");
+          toggleText.text("Hide");
           isFolded = false;
         }
       });
@@ -91,6 +104,7 @@ export function createProtocolMap(target_div = "#dashboard") {
             .forceRadial((d) => (d.connected ? 0 : 150), width / 2, height / 2)
             .strength((d) => (d.connected ? 0 : 0.1))
         );
+        
       const tooltip = d3
         .select("body")
         .append("div")
@@ -208,12 +222,14 @@ export function createProtocolMap(target_div = "#dashboard") {
 }
 
 function addLegend(svg) {
+  const totalLegendHeight = 160;
+  let svgHeight = window.innerHeight;
+
   const legend = svg
     .append("g")
     .attr("class", "legend")
-    .attr("transform", "translate(10, 35)"); // Positioning the legend on the SVG
+    .attr("transform", `translate(10, ${svgHeight - totalLegendHeight})`);
 
-  // Adding legend for node colors
   const nodeColors = [
     { color: "red", text: "Smart Contract" },
     { color: "white", text: "Library" },
@@ -225,18 +241,18 @@ function addLegend(svg) {
     .enter()
     .append("g")
     .attr("class", "node-legend")
-    .attr("transform", (d, i) => `translate(0, ${i * 25 + 10})`); // Adjust vertical spacing between items
+    .attr("transform", (d, i) => `translate(0, ${i * 25 + 10})`); 
 
   nodeLegend
     .append("circle")
     .attr("r", 10)
     .attr("fill", (d) => d.color)
-    .attr("cx", 15); // Adjust circle x position to align with other elements
+    .attr("cx", 15);
 
   nodeLegend
     .append("text")
-    .attr("x", 35) // Adjusting the text position to the right of the circle for better alignment
-    .attr("y", 5) // Aligning text in the middle of the circle
+    .attr("x", 35) 
+    .attr("y", 5)
     .text((d) => d.text)
     .attr("font-family", "monospace")
     .attr("font-size", 14);
