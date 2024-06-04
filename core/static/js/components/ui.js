@@ -423,11 +423,11 @@ export function formatFunctionData(item) {
 
   // Append the "Go to Lines" button if line_numbers is available
   if (item.line_numbers) {
-    formattedData += `<button class="copy-button" data-contract-name="${item.contract_name}" data-start-line="${item.line_numbers[0]}" data-end-line="${item.line_numbers[1]}">Go to Lines</button>`;
+    formattedData += `<button class="copy-button goto-lines-button" data-contract-name="${item.contract_name}" data-start-line="${item.line_numbers[0]}" data-end-line="${item.line_numbers[1]}">Go to Lines</button>`;
   }
 
   // Always add the "Copy" button last
-  formattedData += `<button class="copy-button" onclick="copyKeyContent()">Copy</button>`;
+  formattedData += `<button class="copy-button copy-content-button">Copy</button>`;
 
   formattedData += keyContents;
 
@@ -512,4 +512,21 @@ export function generatePrompt(functionSig, strategy) {
     .catch((error) => {
       console.error("Error generating prompt:", error);
     });
+}
+
+export function copyKeyContent() {
+  // Find the last active key-content to copy from
+  let keyContents = document.querySelectorAll(".key-content.active");
+  if (keyContents.length > 0) {
+    let activeKeyContent = keyContents[keyContents.length - 1]; // Get the last one that was activated
+    // Create a textarea element to help with copying
+    let textarea = document.createElement("textarea");
+    textarea.value = activeKeyContent.innerText;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+  } else {
+    alert("No active key content found.");
+  }
 }

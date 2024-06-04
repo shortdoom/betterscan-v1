@@ -15,7 +15,11 @@ import {
   filterScanResults,
 } from "./dataHandlers.js";
 
-import { toggleScanResultsDisplay, gotoLinesInEditor } from "./ui.js";
+import {
+  toggleScanResultsDisplay,
+  gotoLinesInEditor,
+  copyKeyContent,
+} from "./ui.js";
 
 import { createProtocolMap } from "./protocol_viz.js";
 
@@ -83,12 +87,22 @@ toggleScanResultsButton.addEventListener("click", function (event) {
   toggleScanResultsDisplay();
 });
 
-document.body.addEventListener('click', function(event) {
-  if (event.target.matches('.copy-button')) {
-    const contractName = event.target.getAttribute('data-contract-name');
-    const startLine = parseInt(event.target.getAttribute('data-start-line'), 10);
-    const endLine = parseInt(event.target.getAttribute('data-end-line'), 10);
+document.body.addEventListener("click", function (event) {
+  if (event.target.matches(".goto-lines-button")) {
+    const contractName = event.target.getAttribute("data-contract-name");
+    const startLine = parseInt(
+      event.target.getAttribute("data-start-line"),
+      10
+    );
+    const endLine = parseInt(event.target.getAttribute("data-end-line"), 10);
     gotoLinesInEditor(contractName, startLine, endLine);
+  }
+});
+
+// Delegated event handler for "Copy" buttons
+document.body.addEventListener("click", function (event) {
+  if (event.target.matches(".copy-content-button")) {
+    copyKeyContent();
   }
 });
 

@@ -115,23 +115,6 @@ export function escapeHTML(str) {
     .replace(/'/g, "&#039;");
 }
 
-export function copyKeyContent() {
-  // Find the last active key-content to copy from
-  let keyContents = document.querySelectorAll(".key-content.active");
-  if (keyContents.length > 0) {
-    let activeKeyContent = keyContents[keyContents.length - 1]; // Get the last one that was activated
-    // Create a textarea element to help with copying
-    let textarea = document.createElement("textarea");
-    textarea.value = activeKeyContent.innerText;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand("copy");
-    document.body.removeChild(textarea);
-  } else {
-    alert("No active key content found.");
-  }
-}
-
 export function unescapeHTML(str) {
   const temp = document.createElement("div");
   temp.innerHTML = str;
