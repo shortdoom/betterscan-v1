@@ -20,7 +20,6 @@ export function loadData() {
   button.textContent = "Loading...";
 
   var path = document.getElementById("pathInput").value;
-  var param = document.getElementById("paramInput").value;
 
   // Check and transform the path if it's a supported network URL
   var sortedPath = sortPath(path);
@@ -43,9 +42,7 @@ export function loadData() {
       },
       body:
         "path=" +
-        encodeURIComponent(path) +
-        "&param=" +
-        encodeURIComponent(param),
+        encodeURIComponent(path)
     })
       .then((response) => {
         if (!response.ok) {

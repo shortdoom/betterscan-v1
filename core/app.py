@@ -305,7 +305,6 @@ def index():
         try:
 
             path = request.form["path"]
-            param = request.form["param"]
             path_type = sort_path(path)
 
             # target input etherscan url
@@ -320,21 +319,12 @@ def index():
                 else:
                     return "Invalid URL target", 400
 
-            # target input git clone
-            if path_type == "repo_target" or path_type == "file_target":
-                data, status_code = compile_from_github(path, param)
-                if status_code == 400:
-                    return data, status_code
-                else:
-                    return jsonify(data)
-
             # target input <network>:<address>
             if path_type == "network_target":
                 existing_data = _get_session_data(path)
                 if existing_data:
                     return jsonify(existing_data)
-
-                data, status_code = compile_from_network(path, param)
+                data, status_code = compile_from_network(path)
                 if status_code == 400:
                     return data, status_code
                 else:
@@ -347,6 +337,11 @@ def index():
                     return jsonify(load_source(session_data_path))
                 else:
                     return "Invalid directory target", 400
+            
+            # target input git clone
+            if path_type == "repo_target" or path_type == "file_target":
+                message = f"Compiling from GitHub repository is not supported yet: {path}"
+                return jsonify({"message": message}), 400
 
         except Exception as e:
             return jsonify({"error": str(e)}), 400
@@ -375,6 +370,7 @@ def get_session_data():
         return jsonify(data)
     else:
         return "Session data not found", 404
+
 
 @app.route("/report", methods=["GET"])
 def report():

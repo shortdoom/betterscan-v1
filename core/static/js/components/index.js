@@ -36,24 +36,17 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   document.getElementById("loadDataButton").addEventListener("click", loadData);
-  document
-    .getElementById("reportButton")
-    .addEventListener("click", getActiveSession);
-  document
-    .getElementById("clearDataButton")
-    .addEventListener("click", clearData);
-  document
-    .getElementById("openTargetsButton")
-    .addEventListener("click", () =>
-      window.open("http://127.0.0.1:8001", "_blank")
-    );
-  document
-    .getElementById("protocolViewButton")
-    .addEventListener(
-      "click",
-      () => (window.location.href = "protocol_view.html")
-    );
 });
+
+const navButtons = document.getElementById("inputGroup");
+navButtons
+  .querySelector("#clearDataButton")
+  .addEventListener("click", clearData);
+navButtons
+  .querySelector("#openTargetsButton")
+  .addEventListener("click", () =>
+    window.open("http://127.0.0.1:8001", "_blank")
+  );
 
 const resetButton = document.getElementById("resetSelectionsButton");
 const searchButton = document.getElementById("filterDataButton");

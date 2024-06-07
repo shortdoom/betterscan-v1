@@ -674,6 +674,7 @@ form label {
   display: flex;
   justify-content: space-between; /* This will keep the inputGroup and dropdownContainer apart */
   width: 100%; /* Ensure it spans the entire width of its parent */
+  margin-bottom: 5px;
 }
 
 #inputGroup {
