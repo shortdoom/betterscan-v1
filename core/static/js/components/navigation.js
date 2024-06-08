@@ -57,7 +57,7 @@ export function populateSessionStorageDropdown() {
   };
 
   var defaultOption = document.createElement("option");
-  defaultOption.text = "Select a session";
+  defaultOption.text = "Available contracts sources";
   select.appendChild(defaultOption);
 
   fetch("/list_sessions")

@@ -682,6 +682,14 @@ form label {
   gap: 10px; /* Adds a small gap between the input and the button */
 }
 
+.divider {
+  display: inline-block;
+  width: 1px; /* Width of the divider */
+  height: 50px; /* Height of the divider, adjust based on your button height */
+  background-color: black; /* Color of the divider */
+  vertical-align: middle; /* Aligns the divider with the buttons */
+}
+
 #dropdownContainer {
   max-width: 30%; /* Limits its width but allows it to grow */
   display: flex;
@@ -706,11 +714,11 @@ form label {
 /* ================================ */
 
 .network-svg {
-  display: block; /* Ensures the SVG does not have extra space below it */
-  max-width: 100%; /* Prevents the SVG from extending beyond its container */
-  height: auto; /* Adjust height dynamically with JavaScript if needed */
-  border: 2px solid #ffffff;
-  margin: 0 auto; /* Centers SVG in the dashboard if smaller than full width */
+  display: block;
+  max-width: 100%;
+  height: auto; 
+  border-radius: 4px;
+  margin: 0 auto;
   background-color: #ffffffa6;
 }
 

@@ -1,7 +1,6 @@
 import {
   populateSessionStorageDropdown,
   initializeLoadData,
-  getActiveSession,
   clearData,
 } from "./navigation.js";
 
@@ -26,7 +25,7 @@ import { createProtocolMap } from "./protocol_viz.js";
 document.addEventListener("DOMContentLoaded", function () {
   hljs.highlightAll();
   populateSessionStorageDropdown();
-  createProtocolMap("#protocol_viz");
+  createProtocolMap("#protocolDisplay");
 
   const urlParams = new URLSearchParams(window.location.search);
   const sessionID = urlParams.get("session_id");
@@ -92,7 +91,6 @@ document.body.addEventListener("click", function (event) {
   }
 });
 
-// Delegated event handler for "Copy" buttons
 document.body.addEventListener("click", function (event) {
   if (event.target.matches(".copy-content-button")) {
     copyKeyContent();
@@ -118,3 +116,68 @@ document.getElementById("findTarget").addEventListener("change", function () {
     });
   });
 });
+
+document
+  .getElementById("findTargetFilter")
+  .addEventListener("input", function () {
+    const filterText = this.value.toLowerCase();
+    const findTargetDropdown = document.getElementById("findTarget");
+    const options = findTargetDropdown.options;
+
+    const optionsArray = Array.from(options);
+
+    optionsArray.forEach((option) => {
+      option.style.display = "none";
+    });
+
+    const filteredOptions = optionsArray.filter((option) =>
+      option.text.toLowerCase().includes(filterText)
+    );
+    filteredOptions.forEach((option) => {
+      option.style.display = "block";
+    });
+
+    if (!filterText) {
+      optionsArray.forEach((option) => {
+        option.style.display = "block";
+      });
+    }
+  });
+
+document.addEventListener(
+  "click",
+  function (event) {
+    if (event.target.matches(".collapsible")) {
+      hljs.highlightAll();
+      var functionContent = event.target.nextElementSibling;
+      functionContent.style.display =
+        functionContent.style.display === "block" ? "none" : "block";
+      event.target.classList.toggle("active");
+    } else if (event.target.matches(".expandable")) {
+      var contentId = event.target.getAttribute("data-content-id");
+      var keyContentDiv = document.getElementById(contentId);
+
+      if (keyContentDiv.style.display !== "block") {
+        keyContentDiv.style.display = "block";
+        event.target.classList.add("active");
+        keyContentDiv.classList.add("active");
+      } else {
+        keyContentDiv.style.display = "none";
+        event.target.classList.remove("active");
+        keyContentDiv.classList.remove("active");
+      }
+
+      document.querySelectorAll(".expandable").forEach((btn) => {
+        if (btn !== event.target && btn.classList.contains("active")) {
+          let relatedContent = document.getElementById(
+            btn.getAttribute("data-content-id")
+          );
+          if (!relatedContent.classList.contains("active")) {
+            btn.classList.remove("active");
+          }
+        }
+      });
+    }
+  },
+  false
+);

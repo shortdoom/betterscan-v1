@@ -38,17 +38,18 @@
             style="width: 450px"
           />
           <button id="loadDataButton">Load</button>
+          <div class="divider"></div> <!-- Visual divider -->
           <button id="openTargetsButton">Targets</button>
           <button id="clearDataButton">Clean Storage</button>
         </div>
         <div id="dropdownContainer"></div>
       </div>
 
-      <div id="protocol_viz"></div>
+      <div id="protocolDisplay"></div>
 
       <div id="rootPageDisplay">
         <h2 id="homepage-headers">█ v0.2 █</h2>
-        <div id="protocol_viz"></div>
+        <p>Here will be dragons...</p>
         <p style="text-align: right">
           <a
             href="https://github.com/shortdoom"
@@ -57,13 +58,12 @@
           >
         </p>
       </div>
-      
+
       <div id="contractDisplay"></div>
 
       <div id="searchDisplay" style="display: none">
         <h3>Search functions</h3>
         <form id="searchForm">
-          <!-- Group 1: Filters (Left Side) -->
           <div id="filterGroup" class="form-section">
             <div class="select-group">
               <label for="visibility">Visibility</label>
@@ -129,7 +129,6 @@
           </div>
 
           <div id="findGroup" class="form-section">
-            <!-- Adjusted for Multiple Selections -->
             <div class="select-group">
               <label for="findAction">Select Function</label>
               <select name="findAction[]" id="findAction" multiple size="5">
@@ -146,7 +145,6 @@
               </select>
             </div>
 
-            <!-- Adjusted for Multiple Selections -->
             <div class="select-group">
               <label for="findTarget">Function Target</label>
               <input
@@ -155,7 +153,6 @@
                 placeholder="Select function first. Type to search below"
               />
               <select name="findTarget[]" id="findTarget" multiple size="5">
-                <!-- Options will be added based on selected actions -->
               </select>
             </div>
           </div>
@@ -206,81 +203,6 @@
         <div id="sourceCodeDisplay"></div>
       </div>
     </div>
-
-    <script>
-      // Add event listener to the filter input for dynamic filtering
-      document
-        .getElementById("findTargetFilter")
-        .addEventListener("input", function () {
-          const filterText = this.value.toLowerCase();
-          const findTargetDropdown = document.getElementById("findTarget");
-          const options = findTargetDropdown.options;
-
-          // Temporarily store options in an array to filter in JavaScript instead of live HTMLCollection
-          const optionsArray = Array.from(options);
-
-          // Hide all options initially
-          optionsArray.forEach((option) => {
-            option.style.display = "none";
-          });
-
-          // Filter and display matching options
-          const filteredOptions = optionsArray.filter((option) =>
-            option.text.toLowerCase().includes(filterText)
-          );
-          filteredOptions.forEach((option) => {
-            option.style.display = "block";
-          });
-
-          // If filter is empty, reset to show all options
-          if (!filterText) {
-            optionsArray.forEach((option) => {
-              option.style.display = "block";
-            });
-          }
-        });
-
-      document.addEventListener(
-        "click",
-        function (event) {
-          if (event.target.matches(".collapsible")) {
-            // Toggle collapsible sections
-            hljs.highlightAll();
-            var functionContent = event.target.nextElementSibling;
-            functionContent.style.display =
-              functionContent.style.display === "block" ? "none" : "block";
-            event.target.classList.toggle("active");
-          } else if (event.target.matches(".expandable")) {
-            // Handle clicking on expandable buttons
-            var contentId = event.target.getAttribute("data-content-id");
-            var keyContentDiv = document.getElementById(contentId);
-
-            // Toggle visibility and active state for key-content sections
-            if (keyContentDiv.style.display !== "block") {
-              keyContentDiv.style.display = "block";
-              event.target.classList.add("active");
-              keyContentDiv.classList.add("active");
-            } else {
-              keyContentDiv.style.display = "none";
-              event.target.classList.remove("active");
-              keyContentDiv.classList.remove("active");
-            }
-
-            // Update all other buttons' active state
-            document.querySelectorAll(".expandable").forEach((btn) => {
-              if (btn !== event.target && btn.classList.contains("active")) {
-                let relatedContent = document.getElementById(
-                  btn.getAttribute("data-content-id")
-                );
-                if (!relatedContent.classList.contains("active")) {
-                  btn.classList.remove("active");
-                }
-              }
-            });
-          }
-        },
-        false
-      );
-    </script>
+    <script></script>
   </body>
 </html>

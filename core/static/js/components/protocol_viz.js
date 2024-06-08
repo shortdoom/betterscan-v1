@@ -2,8 +2,8 @@ export function createProtocolMap(target_div = "#dashboard") {
   const dashboard = document.getElementById("dashboard");
   const width = dashboard.offsetWidth;
   let height = window.innerHeight;
-  let foldedHeight = 50;
-  let isFolded = false; // State to track if the SVG is folded
+  let foldedHeight = 45;
+  let isFolded = false;
 
   fetch("/protocol_view")
     .then((response) => response.json())
@@ -24,7 +24,7 @@ export function createProtocolMap(target_div = "#dashboard") {
         .append("svg")
         .attr("class", "network-svg")
         .attr("width", width)
-        .attr("height", height);
+        .attr("height", foldedHeight);
 
       svg
         .append("defs")
@@ -70,17 +70,17 @@ export function createProtocolMap(target_div = "#dashboard") {
         .attr("x", 45)
         .attr("y", 15)
         .attr("text-anchor", "middle")
-        .text("HideView");
+        .text("ExpandView");
 
       toggleGroup.on("click", () => {
-        if (svg.attr("height") > 50) {
-          svg.attr("height", 50); // Set a minimal height when folded
+        if (isFolded) {
+          svg.attr("height", height);
+          toggleText.text("HideView");
+          isFolded = false;
+        } else {
+          svg.attr("height", foldedHeight);
           toggleText.text("ExpandView");
           isFolded = true;
-        } else {
-          svg.attr("height", height); // Restore original height
-          toggleText.text("Hide");
-          isFolded = false;
         }
       });
 
@@ -104,7 +104,7 @@ export function createProtocolMap(target_div = "#dashboard") {
             .forceRadial((d) => (d.connected ? 0 : 150), width / 2, height / 2)
             .strength((d) => (d.connected ? 0 : 0.1))
         );
-        
+
       const tooltip = d3
         .select("body")
         .append("div")
@@ -241,7 +241,7 @@ function addLegend(svg) {
     .enter()
     .append("g")
     .attr("class", "node-legend")
-    .attr("transform", (d, i) => `translate(0, ${i * 25 + 10})`); 
+    .attr("transform", (d, i) => `translate(0, ${i * 25 + 10})`);
 
   nodeLegend
     .append("circle")
@@ -251,7 +251,7 @@ function addLegend(svg) {
 
   nodeLegend
     .append("text")
-    .attr("x", 35) 
+    .attr("x", 35)
     .attr("y", 5)
     .text((d) => d.text)
     .attr("font-family", "monospace")
