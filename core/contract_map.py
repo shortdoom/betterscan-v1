@@ -9,6 +9,12 @@ from collections import defaultdict
 import pygraphviz as pgv
 from networkx.drawing.nx_agraph import graphviz_layout
 
+'''
+
+python contract_map.py mainet:0x29d2bcf0d70f95ce16697e645e2b76d218d66109
+
+'''
+
 EXCEPTIONS = ["msg.value", "msg.sender", "new ", "this.", "address(", "abi."]
 TYPE_EXCEPTIONS = ["uint", "int", "bool", "bytes", "string", "mapping"]
 app_dir = os.path.dirname(os.path.realpath(__file__))
@@ -102,6 +108,12 @@ def generate_address_abi(variables_data):
 
     return variable_call, abi
 
+'''
+
+Doesn't require an argument. Operates on files/out directory contents.
+Use ContractMap to generate external_addresses, _calls (and other) data for ContractMapScan to use.
+
+'''
 
 class ContractMapScan:
     def __init__(self):
@@ -155,6 +167,11 @@ class ContractMapScan:
             target_address_external_calls = session_data.get("contract_data", {}).get(
                 "external_addresses", {}
             )
+            
+            # TODO: Grab external_address path to sessionData.json, add to graph to use jump-to-session
+            
+            # TODO: Grab external_calls (expression) for target_address to use in graph
+            
             self.graph.add_node(
                 target_address, label=target_contract, address=target_address
             )
@@ -196,6 +213,16 @@ class ContractMapScan:
         self.gen_protocol_graph()
         self.visualize_graph()
 
+'''
+
+target_address: <network>:<address> string, will look for the sessionData.json in files/out directory
+session_data: dict/json data structure (sessionData.json) object, for use with external classes
+
+script should be used with already generated sessionData.json files, it will not download contracts (TODO)
+
+returns: external_addresses, external_calls as part of sessionData object
+
+'''
 
 class ContractMap:
     def __init__(self, target_address: str = None, session_data: dict = None):
@@ -204,6 +231,7 @@ class ContractMap:
 
         if target_address:
             session_data_path = check_if_source_exists(target_address)
+            # TODO: if/else to download the contract if sessionData.json not found (and run analyze.py)
             self.target_address = (
                 Web3.to_checksum_address(target_address.split(":")[1])
                 if target_address
@@ -229,7 +257,7 @@ class ContractMap:
                 abi=self.abi_variable,
             )
         else:
-            # TODO: Add main.py (similar to app.py) that'll generate the sessionData.json
+            # TODO: if/else to download the contract if sessionData.json not found (and run analyze.py)
             raise ValueError(
                 "Session data not found and/or target address missing. Run the analytics first."
             )

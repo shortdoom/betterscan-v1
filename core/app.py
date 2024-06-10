@@ -230,8 +230,12 @@ def compile_from_network(path, api_key=None):
         contract_map_scan = ContractMapScan()
         contract_map.run_map()
         contract_map_scan.get_common_external_target(path)
+
+        # TODO: Generates data for a single contract only!
         target.output_contract["external_calls"] = contract_map.external_calls
         target.output_contract["external_addresses"] = contract_map.external_addresses
+
+        # TODO: Paths are broken, they should be generated from separate script on the whole files/out
         target.output_contract["external_addresses_paths"] = (
             contract_map_scan.session_external_addresses_paths
         )
@@ -244,6 +248,7 @@ def compile_from_network(path, api_key=None):
     except Exception as e:
         print(f"Error fetching variable addresses: {e}")
 
+    # NOTE: sessionData.json is created only here
     with open(os.path.join(source.output_dir, "sessionData.json"), "w") as f:
         json.dump(data, f, indent=4)
 
@@ -337,10 +342,12 @@ def index():
                     return jsonify(load_source(session_data_path))
                 else:
                     return "Invalid directory target", 400
-            
+
             # target input git clone
             if path_type == "repo_target" or path_type == "file_target":
-                message = f"Compiling from GitHub repository is not supported yet: {path}"
+                message = (
+                    f"Compiling from GitHub repository is not supported yet: {path}"
+                )
                 return jsonify({"message": message}), 400
 
         except Exception as e:
@@ -665,23 +672,22 @@ def preprocess_all_reachable_from(functions_data, targets):
 
 def preprocess_find_target_reachable(functions_data, targets):
     # Initialize a set to keep track of all functions that are reachable from any of the targets
-    all_reachable_from_any_target = set()
+    all_reaching_target = set()
 
     # Iterate over each target to accumulate reachable functions
     for target in targets:
         for function in functions_data:
-            if function.get("function_full_name") == target:
-                # Update the set with reachable functions for this target
-                reachable_from_current = set(
-                    function.get("all_reachable_from_functions", [])
-                )
-                all_reachable_from_any_target.update(reachable_from_current)
+            all_internal = set(function.get("internal_calls", []))
+            all_external = set(function.get("external_calls_functions", []))
+            all_calls = all_internal.union(all_external)
+            if target in all_calls:
+                all_reaching_target.add(function.get("function_full_name"))
 
     # Filter the functions_data to include only functions that are reachable from at least one of the targets
     filtered_functions = [
         function
         for function in functions_data
-        if function.get("function_full_name") in all_reachable_from_any_target
+        if function.get("function_full_name") in all_reaching_target
     ]
 
     return filtered_functions
