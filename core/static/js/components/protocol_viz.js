@@ -132,7 +132,13 @@ export function createProtocolMap(target_div = "#dashboard") {
         .data(nodes)
         .join("circle")
         .attr("r", 10)
-        .attr("fill", (d) => (d.connected ? "red" : "white"))
+        .attr("fill", (d) => {
+          if (d.label === "ZERO_ADDRESS") {
+            return "grey";
+          } else {
+            return d.connected ? "red" : "white";
+          }
+        })
         .call(drag(simulation))
         .on("click", function (event, d) {
           // Display the additional info when a node is clicked
@@ -222,7 +228,7 @@ export function createProtocolMap(target_div = "#dashboard") {
 }
 
 function addLegend(svg) {
-  const totalLegendHeight = 160;
+  const totalLegendHeight = 200; // Increase the total height to accommodate the new legend
   let svgHeight = window.innerHeight;
 
   const legend = svg
@@ -233,6 +239,7 @@ function addLegend(svg) {
   const nodeColors = [
     { color: "red", text: "Smart Contract" },
     { color: "white", text: "Library" },
+    { color: "grey", text: "ZERO_ADDRESS"} // Add grey circle legend
   ];
 
   const nodeLegend = legend
@@ -241,7 +248,7 @@ function addLegend(svg) {
     .enter()
     .append("g")
     .attr("class", "node-legend")
-    .attr("transform", (d, i) => `translate(0, ${i * 25 + 10})`);
+    .attr("transform", (d, i) => `translate(0, ${i * 30 + 10})`); // Increase the vertical spacing
 
   nodeLegend
     .append("circle")
@@ -261,7 +268,7 @@ function addLegend(svg) {
   legend
     .append("text")
     .attr("x", 0)
-    .attr("y", 60)
+    .attr("y", 100) // Adjust the y position
     .text("Arrow shows the direction of the call")
     .attr("font-family", "monospace")
     .attr("font-size", 14);
@@ -269,9 +276,9 @@ function addLegend(svg) {
   legend
     .append("line")
     .attr("x1", 0)
-    .attr("y1", 70)
+    .attr("y1", 110) // Adjust the y position
     .attr("x2", 30)
-    .attr("y2", 70)
+    .attr("y2", 110)
     .attr("stroke", "black")
     .attr("stroke-width", 2)
     .attr("marker-end", "url(#arrow)"); // Using the same arrow marker
@@ -280,7 +287,7 @@ function addLegend(svg) {
   legend
     .append("text")
     .attr("x", 0)
-    .attr("y", 90)
+    .attr("y", 130) // Adjust the y position
     .text("Link represents an external call between contracts")
     .attr("font-family", "monospace")
     .attr("font-size", 14);
@@ -288,9 +295,9 @@ function addLegend(svg) {
   legend
     .append("line")
     .attr("x1", 0)
-    .attr("y1", 100)
+    .attr("y1", 140) // Adjust the y position
     .attr("x2", 30)
-    .attr("y2", 100)
+    .attr("y2", 140)
     .attr("stroke", "blue")
     .attr("stroke-width", 2); // Regular line without arrow
 
@@ -298,7 +305,7 @@ function addLegend(svg) {
   legend
     .append("text")
     .attr("x", 0)
-    .attr("y", 120)
+    .attr("y", 160) // Adjust the y position
     .text("Click on a node to see more details")
     .attr("font-family", "monospace")
     .attr("font-size", 14);

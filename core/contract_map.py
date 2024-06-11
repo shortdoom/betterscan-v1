@@ -18,6 +18,7 @@ python contract_map.py mainet:0x29d2bcf0d70f95ce16697e645e2b76d218d66109
 
 EXCEPTIONS = ["msg.value", "msg.sender", "new ", "this.", "address(", "abi."]
 TYPE_EXCEPTIONS = ["uint", "int", "bool", "bytes", "string", "mapping"]
+ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 app_dir = os.path.dirname(os.path.realpath(__file__))
 base_path = os.path.join(app_dir, "files", "out")
 
@@ -130,8 +131,8 @@ class ContractMapScan:
         self.graph = nx.DiGraph()
         self.session_details = {}
         # self.recursive = False
-        self.get_common_external_protocol()
-        print("self.contract_interactions", self.contract_interactions)
+        # self.get_common_external_protocol()
+        # print("self.contract_interactions", self.contract_interactions)
 
     # Scans all of the files/out for external calls to the same addresses
     def get_common_external_protocol(self):
@@ -151,12 +152,11 @@ class ContractMapScan:
                 else:
                     network = session_data["network_info"]["contract_network"]
                     external_target = f"{network}:{address}"
-                    print(
-                        "Session not found for address, trying to download",
-                        external_target,
-                    )
-
-                    if address != "0x0000000000000000000000000000000000000000":
+                    if address != ZERO_ADDRESS:
+                        print(
+                            "Session not found for address, trying to download",
+                            external_target,
+                        )
                         try:
                             run_analysis(external_target)
                         except Exception as e:
@@ -205,7 +205,11 @@ class ContractMapScan:
             # TODO: Grab external_calls (expression) for target_address to use in graph
 
             self.graph.add_node(
-                target_address, label=target_contract, address=target_address
+                target_address,
+                label=(
+                    target_contract if target_address != ZERO_ADDRESS else "ZERO_ADDRESS"
+                ),
+                address=target_address,
             )
 
             for (
@@ -214,7 +218,11 @@ class ContractMapScan:
             ) in target_address_external_calls.items():
                 self.graph.add_node(
                     external_address,
-                    label=external_contract_name,
+                    label=(
+                        external_contract_name
+                        if external_address != ZERO_ADDRESS
+                        else "ZERO_ADDRESS"
+                    ),
                     address=external_address,
                 )
                 self.graph.add_edge(target_address, external_address)

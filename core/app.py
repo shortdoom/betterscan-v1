@@ -254,6 +254,7 @@ def compile_from_network(path, api_key=None):
         
     try:
         contract_map_scan = ContractMapScan()
+        contract_map_scan.get_common_external_protocol()
         print("contract_interactions", contract_map_scan.contract_interactions)
     except Exception as e:
         print(f"Error running ContractMapScan: {e}")
