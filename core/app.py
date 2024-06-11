@@ -227,18 +227,18 @@ def compile_from_network(path, api_key=None):
 
     try:
         contract_map = ContractMap(path, data)
-        contract_map_scan = ContractMapScan()
+        # contract_map_scan = ContractMapScan()
         contract_map.run_map()
-        contract_map_scan.get_common_external_target(path)
+        # contract_map_scan.get_common_external_target(path)
 
         # TODO: Generates data for a single contract only!
         target.output_contract["external_calls"] = contract_map.external_calls
         target.output_contract["external_addresses"] = contract_map.external_addresses
 
         # TODO: Paths are broken, they should be generated from separate script on the whole files/out
-        target.output_contract["external_addresses_paths"] = (
-            contract_map_scan.session_external_addresses_paths
-        )
+        # target.output_contract["external_addresses_paths"] = (
+        #     contract_map_scan.session_external_addresses_paths
+        # )
 
         for var in target.output_variables:
             for key, value in contract_map.external_addresses.items():
@@ -251,6 +251,12 @@ def compile_from_network(path, api_key=None):
     # NOTE: sessionData.json is created only here
     with open(os.path.join(source.output_dir, "sessionData.json"), "w") as f:
         json.dump(data, f, indent=4)
+        
+    try:
+        contract_map_scan = ContractMapScan()
+        print("contract_interactions", contract_map_scan.contract_interactions)
+    except Exception as e:
+        print(f"Error running ContractMapScan: {e}")
 
     return data, 200
 
