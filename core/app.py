@@ -129,20 +129,6 @@ def sort_path(path):
         return "network_url_target"
 
 
-def get_github(path):
-    """
-    Clones the GitHub repository to the "files/out" directory.
-    """
-    try:
-        repo_name = os.path.basename(urlparse(path).path)
-        clone_path = os.path.join("files", "out", repo_name)
-        Repo.clone_from(path, clone_path)
-        return os.path.abspath(clone_path)
-    except Exception as e:
-        print(f"Error cloning repository: {e}")
-        return None
-
-
 def load_source(file_path):
     """
     Loads the JSON data from a file.
@@ -152,7 +138,7 @@ def load_source(file_path):
     return data
 
 
-def compile_from_network(path, api_key=None):
+def generate_session_data(path, api_key=None):
     if not path:
         return "Missing target network:0x...", 400
 
@@ -227,18 +213,11 @@ def compile_from_network(path, api_key=None):
 
     try:
         contract_map = ContractMap(path, data)
-        # contract_map_scan = ContractMapScan()
         contract_map.run_map()
-        # contract_map_scan.get_common_external_target(path)
 
-        # TODO: Generates data for a single contract only!
+        # NOTE: Generates data for a single contract only!
         target.output_contract["external_calls"] = contract_map.external_calls
         target.output_contract["external_addresses"] = contract_map.external_addresses
-
-        # TODO: Paths are broken, they should be generated from separate script on the whole files/out
-        # target.output_contract["external_addresses_paths"] = (
-        #     contract_map_scan.session_external_addresses_paths
-        # )
 
         for var in target.output_variables:
             for key, value in contract_map.external_addresses.items():
@@ -251,61 +230,21 @@ def compile_from_network(path, api_key=None):
     # NOTE: sessionData.json is created only here
     with open(os.path.join(source.output_dir, "sessionData.json"), "w") as f:
         json.dump(data, f, indent=4)
-        
+
+    return data, 200
+
+
+def compile_from_network(path, api_key=None):
+    data, status_code = generate_session_data(path, api_key)
+
+    # NOTE: Only used on first compilation
     try:
         contract_map_scan = ContractMapScan()
-        contract_map_scan.get_common_external_protocol()
-        print("contract_interactions", contract_map_scan.contract_interactions)
+        contract_map_scan.get_external_sources()
     except Exception as e:
         print(f"Error running ContractMapScan: {e}")
 
-    return data, 200
-
-
-def compile_from_github(path, contract_name):
-    """
-    Compile contract from github repository
-    """
-    dir = get_github(path)
-
-    try:
-        print(f"Init AnalyticsClass for {contract_name}... in gh repo {path}")
-        print(f"This can take some time...")
-        target = AnalyticsClass(
-            dir,  # target path/template_directory (hh or forge)
-            contract_name,  # target Contract name
-        )
-        print(f"Successfully intiated {contract_name}...")
-        print(f"Running analysis...")
-        target.run_analysis()
-    except Exception as e:
-        print(f"Error running AnalyticsClass: {e}")
-        return f"Error running AnalyticsClass", 400
-
-    try:
-        prompter = PromptClass()
-        all_strategies = prompter.get_all_prompt_strategies()
-        for function_data in target.output_functions:
-            function_data["description"] = get_function_description(
-                contract_name, function_data
-            )
-            function_data["prompts"] = {strategy: "" for strategy in all_strategies}
-    except Exception as e:
-        print(f"Error generating available strategies: {str(e)}")
-
-    data = {
-        "network_info": [],
-        "contract_data": target.output_contract,
-        "functions_data": target.output_functions,
-        "variables_data": target.output_variables,
-        "source_code": target.output_sources,
-        "scan_results": target.output_scan,
-    }
-
-    with open(os.path.join(dir, "sessionData.json"), "w") as f:
-        json.dump(data, f, indent=4)
-
-    return data, 200
+    return data, status_code
 
 
 # region Endpoints
@@ -363,10 +302,24 @@ def index():
         return render_template("index.html")
 
 
+@app.route("/generate_session_data", methods=["POST"])
+def generate_session_data_endpoint():
+    path = request.json.get("path")
+    data, status_code = generate_session_data(path)
+
+    if status_code != 200:
+        return (
+            jsonify({"message": "Generating session data for external target failed"}),
+            400,
+        )
+
+    return jsonify(data)
+
+
 @app.route("/protocol_view", methods=["GET"])
 def protocol_view():
     contract_map_scan = ContractMapScan()
-    contract_map_scan.run()
+    contract_map_scan.gen_protocol_graph()
     protocol_data = nx.node_link_data(contract_map_scan.graph)
     return jsonify(protocol_data)
 

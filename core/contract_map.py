@@ -4,11 +4,7 @@ import json
 import argparse
 from web3 import Web3
 import networkx as nx
-import matplotlib.pyplot as plt
-from collections import defaultdict
-import pygraphviz as pgv
-from networkx.drawing.nx_agraph import graphviz_layout
-from utils.targets_run import run_analysis
+from utils.targets_run import run_external_targets
 
 """
 
@@ -127,15 +123,16 @@ class ContractMapScan:
         self.session_data_paths = find_all_session_data_paths()
         self.session_external_addresses = []
         self.session_external_addresses_paths = {}
-        self.contract_interactions = defaultdict(list)
         self.graph = nx.DiGraph()
         self.session_details = {}
-        # self.recursive = False
-        # self.get_common_external_protocol()
-        # print("self.contract_interactions", self.contract_interactions)
+        # NOTE: Use this to allow for collecting all of the addresses
+        # 0 = Infinite crawl
+        # 1 = 1st level deep
+        # 2 (and so on) = 2nd level deep
+        self.crawl_level = 1
 
     # Scans all of the files/out for external calls to the same addresses
-    def get_common_external_protocol(self):
+    def get_external_sources(self):
         external_addresses_found = []
         for session_data_path in self.session_data_paths:
             session_data = get_session_data(session_data_path)
@@ -145,47 +142,21 @@ class ContractMapScan:
         for addresses in external_addresses_found:
             for name, address in addresses.items():
                 session_found = check_if_source_exists(address)
-                if session_found:
-                    self.contract_interactions[f"{name}:{address}"].append(
-                        session_found
-                    )
-                else:
+                if not session_found:
                     network = session_data["network_info"]["contract_network"]
                     external_target = f"{network}:{address}"
-                    if address != ZERO_ADDRESS:
+                    if address != ZERO_ADDRESS:  # Check the flag here
                         print(
                             "Session not found for address, trying to download",
                             external_target,
                         )
                         try:
-                            run_analysis(external_target)
+                            # NOTE: run_analysis would cause an infinite recursion on external addresses
+                            # NOTE: compile_external_target will only run 1st level crawl
+                            run_external_targets(external_target)
                         except Exception as e:
                             print("Error running analysis")
                             continue
-
-    # Scans only specific directory
-    def get_common_external_target(self, target_address):
-        print("get_common_external_target address:", target_address)
-        session_data_path = check_if_source_exists(target_address)
-        print("is there a session data?", session_data_path)
-        external_addresses_paths = {}
-        if session_data_path:
-            print("get_common_external_target session_data_path found")
-            session_data = get_session_data(session_data_path)
-            external_addresses = session_data["contract_data"]["external_addresses"]
-            print("external addresses:", external_addresses)
-            for name, address in external_addresses.items():
-                session_found = check_if_source_exists(address)
-                if session_found:
-                    print("Session found for address:", address)
-                    external_addresses_paths[name] = session_found
-                else:
-                    print("Session not found for address:", address)
-                    network = session_data["network_info"]["network"]
-                    external_target = f"{network}:{address}"
-                    run_analysis(external_target)
-
-            self.session_external_addresses_paths = external_addresses_paths
 
     def gen_protocol_graph(self):
         for path in self.session_data_paths:
@@ -207,7 +178,9 @@ class ContractMapScan:
             self.graph.add_node(
                 target_address,
                 label=(
-                    target_contract if target_address != ZERO_ADDRESS else "ZERO_ADDRESS"
+                    target_contract
+                    if target_address != ZERO_ADDRESS
+                    else "ZERO_ADDRESS"
                 ),
                 address=target_address,
             )
@@ -229,29 +202,6 @@ class ContractMapScan:
 
                 if external_address not in self.session_details:
                     self.session_details[external_address] = path
-
-    def visualize_graph(self):
-        A = nx.nx_agraph.to_agraph(self.graph)
-
-        A.graph_attr.update(
-            {
-                "splines": "spline",
-                "rankdir": "LR",
-                "nodesep": "0.75",
-                "ranksep": "1.2",
-            }
-        )
-
-        A.layout("fdp")
-
-        graph_path = os.path.join(base_path, "network_graph.png")
-        A.draw(graph_path)
-
-        print("Graph has been saved as 'network_graph.png'")
-
-    def run(self):
-        self.gen_protocol_graph()
-        self.visualize_graph()
 
 
 """
@@ -374,6 +324,6 @@ if __name__ == "__main__":
     # contract_map.run_map()
     contract_map_scan = ContractMapScan()
     contract_map_scan.run()
-    # contract_map_scan.get_common_external_protocol()
+    # contract_map_scan.get_external_sources()
     # print("Contract interactions:", contract_map_scan.contract_interactions)
     # contract_map_scan.get_common_external_target(args.target_address)

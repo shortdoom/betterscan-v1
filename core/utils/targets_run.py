@@ -96,6 +96,44 @@ def run_analysis(targets):
             with open("fails.csv", "a", newline="") as file:
                 writer = csv.writer(file)
                 writer.writerow([payload, str(e)])
+                
+def run_external_targets(targets):
+    url = "http://127.0.0.1:5000/generate_session_data"
+    timestamps = deque(maxlen=5)
+
+    headers = {
+        "Content-Type": "application/json",
+    }
+
+    if isinstance(targets, str):
+        targets = [targets]
+
+    for target in targets:
+        while len(timestamps) == 5 and time.time() - timestamps[0] < 1:
+            time.sleep(1 - (time.time() - timestamps[0]))
+
+        if len(timestamps) == 5:
+            timestamps.popleft()
+
+        timestamps.append(time.time())
+
+        payload = json.dumps({"path": target})
+        print("Executing payload:", payload)
+
+        try:
+            response = requests.post(url, data=payload, headers=headers)
+            if response.status_code == 200:
+                save_response_to_directory(target[0], response, TARGETS_DIRECTORY)
+            else:
+                print("Error:", response.text)
+                with open("fails.csv", "a", newline="") as file:
+                    writer = csv.writer(file)
+                    writer.writerow([payload, response.text])
+        except Exception as e:
+            print("An error occurred:", e)
+            with open("fails.csv", "a", newline="") as file:
+                writer = csv.writer(file)
+                writer.writerow([payload, str(e)])
 
 
 def save_response_to_directory(target, response, directory):
