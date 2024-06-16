@@ -59,7 +59,7 @@ def check_if_exists(path):
     conn.close()
     return exists == 1
 
-def run_analysis(targets):
+def run_analysis(targets, crawl=1):
     url = "http://127.0.0.1:5000/"
     timestamps = deque(maxlen=5)
 
@@ -79,7 +79,8 @@ def run_analysis(targets):
 
         timestamps.append(time.time())
 
-        payload = "path={}&param=".format(target)
+        payload = "path={}&crawl={}".format(target, crawl)
+        print("crawling with code run_analysis: ", crawl)
         print("Executing payload:", payload)
 
         try:

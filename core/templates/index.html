@@ -37,8 +37,13 @@
             placeholder="<network>:<address> or ethertscan explorer url"
             style="width: 450px"
           />
+          <select id="crawlInput">
+            <option value="1" selected>1 (default)</option>
+            <option value="0">0</option>
+          </select>
           <button id="loadDataButton">Load</button>
-          <div class="divider"></div> <!-- Visual divider -->
+          <div class="divider"></div>
+          <!-- Visual divider -->
           <button id="openTargetsButton">Targets</button>
           <button id="clearDataButton">Clean Storage</button>
         </div>
@@ -152,8 +157,12 @@
                 id="findTargetFilter"
                 placeholder="Select function first. Type to search below"
               />
-              <select name="findTarget[]" id="findTarget" multiple size="5">
-              </select>
+              <select
+                name="findTarget[]"
+                id="findTarget"
+                multiple
+                size="5"
+              ></select>
             </div>
           </div>
           <button id="resetSelectionsButton">Reset</button>

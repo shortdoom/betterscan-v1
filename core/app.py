@@ -234,12 +234,12 @@ def generate_session_data(path, api_key=None):
     return data, 200
 
 
-def compile_from_network(path, api_key=None):
-    data, status_code = generate_session_data(path, api_key)
+def compile_from_network(path, crawl=1):
+    data, status_code = generate_session_data(path)
 
     # NOTE: Only used on first compilation
     try:
-        contract_map_scan = ContractMapScan()
+        contract_map_scan = ContractMapScan(crawl)
         contract_map_scan.get_external_sources()
     except Exception as e:
         print(f"Error running ContractMapScan: {e}")
@@ -256,13 +256,15 @@ def index():
         try:
 
             path = request.form["path"]
+            crawl = request.form["crawl"]
+            
             path_type = sort_path(path)
-
+            print("crawling with code: ", crawl)
             # target input etherscan url
             if path_type == "network_url_target":
                 network_address = get_target_from_url(path)
                 if network_address:
-                    data, status_code = compile_from_network(network_address)
+                    data, status_code = compile_from_network(network_address, crawl)
                     if status_code == 400:
                         return data, status_code
                     else:
@@ -275,7 +277,7 @@ def index():
                 existing_data = _get_session_data(path)
                 if existing_data:
                     return jsonify(existing_data)
-                data, status_code = compile_from_network(path)
+                data, status_code = compile_from_network(path, crawl)
                 if status_code == 400:
                     return data, status_code
                 else:

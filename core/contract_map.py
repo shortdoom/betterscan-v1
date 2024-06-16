@@ -4,7 +4,7 @@ import json
 import argparse
 from web3 import Web3
 import networkx as nx
-from utils.targets_run import run_external_targets
+from utils.targets_run import run_external_targets, run_analysis
 
 """
 
@@ -119,17 +119,17 @@ Use ContractMap to generate external_addresses, _calls (and other) data for Cont
 
 
 class ContractMapScan:
-    def __init__(self):
+    def __init__(self, crawl_level=1):
         self.session_data_paths = find_all_session_data_paths()
         self.session_external_addresses = []
         self.session_external_addresses_paths = {}
         self.graph = nx.DiGraph()
         self.session_details = {}
-        # NOTE: Use this to allow for collecting all of the addresses
+
         # 0 = Infinite crawl
-        # 1 = 1st level deep
-        # 2 (and so on) = 2nd level deep
-        self.crawl_level = 1
+        # 1 = 1st level deep (default)
+        # TODO: 2 (and so on) = 2nd level deep
+        self.crawl_level = int(crawl_level)
 
     # Scans all of the files/out for external calls to the same addresses
     def get_external_sources(self):
@@ -145,18 +145,23 @@ class ContractMapScan:
                 if not session_found:
                     network = session_data["network_info"]["contract_network"]
                     external_target = f"{network}:{address}"
-                    if address != ZERO_ADDRESS:  # Check the flag here
-                        print(
-                            "Session not found for address, trying to download",
-                            external_target,
-                        )
+                    
+                    # TODO: Refactor logic
+                    if address != ZERO_ADDRESS and self.crawl_level == 1:
                         try:
-                            # NOTE: run_analysis would cause an infinite recursion on external addresses
-                            # NOTE: compile_external_target will only run 1st level crawl
                             run_external_targets(external_target)
                         except Exception as e:
-                            print("Error running analysis")
+                            print("Error: run_external_targets(external_target)")
                             continue
+                    elif address != ZERO_ADDRESS and self.crawl_level == 0:
+                        try:
+                            run_analysis(external_target, self.crawl_level)
+                        except Exception as e:
+                            print("Error: run_analysis(external_target)")
+                            continue
+                    elif address != ZERO_ADDRESS and self.crawl_level > 1:
+                        print("Crawl level not supported yet")
+                        continue
 
     def gen_protocol_graph(self):
         for path in self.session_data_paths:
