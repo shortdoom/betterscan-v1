@@ -141,12 +141,23 @@ export function createProtocolMap(target_div = "#dashboard") {
         })
         .call(drag(simulation))
         .on("click", function (event, d) {
-          // Display the additional info when a node is clicked
+          const session_id = d.session_path.split("/").pop(); // Extract session ID from path
+          const expressionsFormatted = d.ext_expressions
+            .map((expr) => `<li>${expr}</li>`)
+            .join("");
+
+          // Store the session URL in a data attribute
+          const sessionUrl = `/session/${session_id}`;
+
           tooltip
-            .html("address: " + d.address)
+            .html(
+              `<strong>Address:</strong> ${d.address}<br>
+                   <strong>Expressions:</strong> <ul>${expressionsFormatted}</ul>
+                   <strong>Session:</strong> <span class='openSessionLink' data-sessionurl='${sessionUrl}' style='cursor: pointer; text-decoration: underline; color: blue;'>Open Session</span>`
+            )
             .style("visibility", "visible")
-            .style("left", event.pageX + 10 + "px")
-            .style("top", event.pageY + 10 + "px");
+            .style("left", `${event.pageX + 10}px`)
+            .style("top", `${event.pageY + 10}px`);
         });
 
       const labels = svg
@@ -239,7 +250,7 @@ function addLegend(svg) {
   const nodeColors = [
     { color: "red", text: "Smart Contract" },
     { color: "white", text: "Library" },
-    { color: "grey", text: "ZERO_ADDRESS"} // Add grey circle legend
+    { color: "grey", text: "ZERO_ADDRESS" }, // Add grey circle legend
   ];
 
   const nodeLegend = legend

@@ -35,6 +35,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   document.getElementById("loadDataButton").addEventListener("click", loadData);
+  
 });
 
 const navButtons = document.getElementById("inputGroup");

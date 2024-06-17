@@ -145,7 +145,7 @@ class ContractMapScan:
                 if not session_found:
                     network = session_data["network_info"]["contract_network"]
                     external_target = f"{network}:{address}"
-                    
+
                     # TODO: Refactor logic
                     if address != ZERO_ADDRESS and self.crawl_level == 1:
                         try:
@@ -176,9 +176,21 @@ class ContractMapScan:
                 "external_addresses", {}
             )
 
+            target_external_calls_exp = session_data.get("contract_data", {}).get(
+                "external_calls", []
+            )
+
             # TODO: Grab external_address path to sessionData.json, add to graph to use jump-to-session
+            target_external_session_path = session_data.get("network_info", {}).get(
+                "data_directory", ""
+            )
 
             # TODO: Grab external_calls (expression) for target_address to use in graph
+            expressions = [
+                call
+                for call in target_external_calls_exp
+                if any(key in call for key in target_address_external_calls.keys())
+            ]
 
             self.graph.add_node(
                 target_address,
@@ -188,6 +200,12 @@ class ContractMapScan:
                     else "ZERO_ADDRESS"
                 ),
                 address=target_address,
+                session_path=(
+                    target_external_session_path
+                    if target_address != ZERO_ADDRESS
+                    else ""
+                ),
+                ext_expressions=expressions,
             )
 
             for (
@@ -202,6 +220,12 @@ class ContractMapScan:
                         else "ZERO_ADDRESS"
                     ),
                     address=external_address,
+                    session_path=(
+                        target_external_session_path
+                        if target_address != ZERO_ADDRESS
+                        else ""
+                    ),
+                    ext_expressions=expressions,
                 )
                 self.graph.add_edge(target_address, external_address)
 
