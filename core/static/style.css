@@ -723,7 +723,7 @@ form label {
 }
 
 .tooltip {
-  pointer-events: none;
+  /* pointer-events: none; */
   opacity: 0.9;
   font-size: 12px;
   color: #333;

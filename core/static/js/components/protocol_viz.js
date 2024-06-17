@@ -141,20 +141,22 @@ export function createProtocolMap(target_div = "#dashboard") {
         })
         .call(drag(simulation))
         .on("click", function (event, d) {
-          const session_id = d.session_path.split("/").pop(); // Extract session ID from path
+          let session_id = d.session_path.split("/").pop();
+          session_id = session_id.split(":"); 
+          session_id = `${session_id[0]}:${session_id[1]}`; 
+          
           const expressionsFormatted = d.ext_expressions
             .map((expr) => `<li>${expr}</li>`)
             .join("");
 
-          // Store the session URL in a data attribute
-          const sessionUrl = `/session/${session_id}`;
+          const sessionUrl = `/?session_id=${session_id}`;
 
           tooltip
             .html(
               `<strong>Address:</strong> ${d.address}<br>
                    <strong>Expressions:</strong> <ul>${expressionsFormatted}</ul>
-                   <strong>Session:</strong> <span class='openSessionLink' data-sessionurl='${sessionUrl}' style='cursor: pointer; text-decoration: underline; color: blue;'>Open Session</span>`
-            )
+                   <strong>Session:</strong> <a href='${sessionUrl}' style='text-decoration: underline; color: blue;'>Open Session</a>`
+                  )
             .style("visibility", "visible")
             .style("left", `${event.pageX + 10}px`)
             .style("top", `${event.pageY + 10}px`);
