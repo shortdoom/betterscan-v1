@@ -57,7 +57,7 @@ export function populateSessionStorageDropdown() {
   };
 
   var defaultOption = document.createElement("option");
-  defaultOption.text = "Available contracts sources";
+  defaultOption.text = "available_contract_sources";
   select.appendChild(defaultOption);
 
   fetch("/list_sessions")
@@ -108,7 +108,6 @@ export function initializePageWithData() {
       document.getElementById("searchDisplay").style.display = "block";
       document.getElementById("criteriaDisplay").style.display = "block";
       createSourceCodeView(sessionData.source_code);
-      document.getElementById("rootPageDisplay").style.display = "none";
     } else {
       console.log("Session data not found for ID:", sessionID);
       initializeFileData(path);
@@ -133,7 +132,6 @@ export function initializeLoadData(path) {
     document.getElementById("searchDisplay").style.display = "block";
     document.getElementById("criteriaDisplay").style.display = "block";
     createSourceCodeView(localData.source_code);
-    document.getElementById("rootPageDisplay").style.display = "none";
   } else {
     console.log("Session data not found for ID:", path);
     initializeFileData(path);

@@ -106,6 +106,8 @@ select {
   padding: 10px;
   background-color: #fff;
   color: #333;
+  font: 14px / normal "Monaco", "Menlo", "Ubuntu Mono", "Consolas",
+    "Source Code Pro", "source-code-pro", monospace;
   /* font-size: 16px; */
 }
 
@@ -120,9 +122,10 @@ select {
 /* Styling for input and buttons */
 input[type="text"] {
   padding: 10px;
-  margin-bottom: 5px;
   color: #333;
   font-size: 16px;
+  font: 14px / normal "Monaco", "Menlo", "Ubuntu Mono", "Consolas",
+    "Source Code Pro", "source-code-pro", monospace;
 }
 
 button {
@@ -682,12 +685,9 @@ form label {
   gap: 10px; /* Adds a small gap between the input and the button */
 }
 
-.divider {
-  display: inline-block;
-  width: 1px; /* Width of the divider */
-  height: 50px; /* Height of the divider, adjust based on your button height */
-  background-color: black; /* Color of the divider */
-  vertical-align: middle; /* Aligns the divider with the buttons */
+::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+  color: inherit;
+  opacity: 1; /* Firefox */
 }
 
 #dropdownContainer {
@@ -719,6 +719,7 @@ form label {
   height: auto; 
   border-radius: 4px;
   margin: 0 auto;
+  margin-top: 30px;
   background-color: #ffffffa6;
 }
 

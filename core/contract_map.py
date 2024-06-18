@@ -19,6 +19,8 @@ app_dir = os.path.dirname(os.path.realpath(__file__))
 base_path = os.path.join(app_dir, "files", "out")
 
 
+# TODO: Move to shared.py
+
 def check_if_source_exists(path):
     for root, dirs, _ in os.walk(base_path):
         for dir_name in dirs:
@@ -124,11 +126,11 @@ class ContractMapScan:
         self.session_external_addresses = []
         self.session_external_addresses_paths = {}
         self.graph = nx.DiGraph()
-        self.session_details = {}
 
         # 0 = Infinite crawl
         # 1 = 1st level deep (default)
         # TODO: 2 (and so on) = 2nd level deep
+        # NOTE: 0 and 1 is enough, change to flag
         self.crawl_level = int(crawl_level)
 
     # Scans all of the files/out for external calls to the same addresses
@@ -220,17 +222,8 @@ class ContractMapScan:
                         else "ZERO_ADDRESS"
                     ),
                     address=external_address,
-                    session_path=(
-                        target_external_session_path
-                        if target_address != ZERO_ADDRESS
-                        else ""
-                    ),
-                    ext_expressions=expressions,
                 )
                 self.graph.add_edge(target_address, external_address)
-
-                if external_address not in self.session_details:
-                    self.session_details[external_address] = path
 
 
 """

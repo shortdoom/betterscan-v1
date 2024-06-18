@@ -1,5 +1,8 @@
 # Exclude AceEditor library
 core/static/js/editor/* linguist-vendored=true
 
+# Exclude d3.js library
+core/static/js/d3/* linguist-vendored=true
+
 # Exclude image files
 docs/* linguist-documentation=true

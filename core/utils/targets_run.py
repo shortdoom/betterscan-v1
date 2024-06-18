@@ -89,9 +89,11 @@ def run_analysis(targets, crawl=1):
                 save_response_to_directory(target[0], response, TARGETS_DIRECTORY)
             else:
                 print("Error:", response.text)
-                with open("fails.csv", "a", newline="") as file:
-                    writer = csv.writer(file)
-                    writer.writerow([payload, response.text])
+                # with open("fails.csv", "a", newline="") as file:
+                #     writer = csv.writer(file)
+                #     writer.writerow([payload, response.text])
+                print("Returning to ContractMapScan")
+                raise Exception("Error in run_analysis")
         except Exception as e:
             print("An error occurred:", e)
             with open("fails.csv", "a", newline="") as file:

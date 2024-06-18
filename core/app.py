@@ -7,7 +7,6 @@ from contract_map import ContractMapScan
 from urllib.parse import urlparse
 import networkx as nx
 from web3 import Web3
-from git import Repo
 import re
 import shutil
 import os
@@ -156,8 +155,8 @@ def generate_session_data(path, api_key=None):
     session_data_path = check_if_source_exists(path)
 
     if session_data_path:
-        contract_data = load_source(session_data_path)
-        return contract_data
+        data = load_source(session_data_path)
+        return data
 
     try:
         if api_key:
@@ -236,6 +235,9 @@ def generate_session_data(path, api_key=None):
 
 def compile_from_network(path, crawl=1):
     data, status_code = generate_session_data(path)
+    
+    if status_code != 200:
+        return data, status_code
 
     # NOTE: Only used on first compilation
     try:
@@ -259,7 +261,7 @@ def index():
             crawl = request.form["crawl"]
             
             path_type = sort_path(path)
-            print("crawling with code: ", crawl)
+
             # target input etherscan url
             if path_type == "network_url_target":
                 network_address = get_target_from_url(path)
@@ -278,7 +280,8 @@ def index():
                 if existing_data:
                     return jsonify(existing_data)
                 data, status_code = compile_from_network(path, crawl)
-                if status_code == 400:
+                if status_code != 200:
+                    print("returned to app.py: 400 status code")
                     return data, status_code
                 else:
                     return jsonify(data)

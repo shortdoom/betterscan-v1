@@ -34,35 +34,21 @@
           <input
             type="text"
             id="pathInput"
-            placeholder="<network>:<address> or ethertscan explorer url"
+            placeholder="<network>:<address> || etherscan_explorer_url"
             style="width: 450px"
           />
           <select id="crawlInput">
-            <option value="1" selected>1 (default)</option>
-            <option value="0">0</option>
+            <option value="1" selected>deep_crawl: no</option>
+            <option value="0">deep_crawl: ok</option>
           </select>
-          <button id="loadDataButton">Load</button>
-          <div class="divider"></div>
-          <!-- Visual divider -->
-          <button id="openTargetsButton">Targets</button>
-          <button id="clearDataButton">Clean Storage</button>
+          <button id="loadDataButton">load</button>
+          <button id="openTargetsButton">targets</button>
+          <button id="clearDataButton">clean_storage</button>
         </div>
         <div id="dropdownContainer"></div>
       </div>
 
       <div id="protocolDisplay"></div>
-
-      <div id="rootPageDisplay">
-        <h2 id="homepage-headers">█ v0.2 █</h2>
-        <p>Here will be dragons...</p>
-        <p style="text-align: right">
-          <a
-            href="https://github.com/shortdoom"
-            style="color: black; font-size: small"
-            >by blackbigswan</a
-          >
-        </p>
-      </div>
 
       <div id="contractDisplay"></div>
 
@@ -211,6 +197,14 @@
         <div id="functionDisplay"></div>
         <div id="sourceCodeDisplay"></div>
       </div>
+
+      <p style="text-align: right">
+        <a
+          href="https://github.com/shortdoom"
+          style="color: black; font-size: small; font-weight: bold;"
+          >by blackbigswan</a
+        >
+      </p>
     </div>
     <script></script>
   </body>

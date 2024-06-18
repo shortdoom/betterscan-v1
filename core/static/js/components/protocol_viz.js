@@ -24,7 +24,7 @@ export function createProtocolMap(target_div = "#dashboard") {
         .append("svg")
         .attr("class", "network-svg")
         .attr("width", width)
-        .attr("height", foldedHeight);
+        .attr("height", height);
 
       svg
         .append("defs")
@@ -70,19 +70,19 @@ export function createProtocolMap(target_div = "#dashboard") {
         .attr("x", 45)
         .attr("y", 15)
         .attr("text-anchor", "middle")
-        .text("ExpandView");
+        .text("HideView");
 
-      toggleGroup.on("click", () => {
-        if (isFolded) {
-          svg.attr("height", height);
-          toggleText.text("HideView");
-          isFolded = false;
-        } else {
-          svg.attr("height", foldedHeight);
-          toggleText.text("ExpandView");
-          isFolded = true;
-        }
-      });
+        toggleGroup.on("click", () => {
+          if (!isFolded) {
+            svg.attr("height", foldedHeight);
+            toggleText.text("ExpandView");
+            isFolded = true;
+          } else {
+            svg.attr("height", height);
+            toggleText.text("HideView");
+            isFolded = false;
+          }
+        });
 
       const simulation = d3
         .forceSimulation(nodes)
@@ -154,7 +154,7 @@ export function createProtocolMap(target_div = "#dashboard") {
           tooltip
             .html(
               `<strong>Address:</strong> ${d.address}<br>
-                   <strong>Expressions:</strong> <ul>${expressionsFormatted}</ul>
+                   <strong>Calls made:</strong> <ul>${expressionsFormatted}</ul>
                    <strong>Session:</strong> <a href='${sessionUrl}' style='text-decoration: underline; color: blue;'>Open Session</a>`
                   )
             .style("visibility", "visible")
