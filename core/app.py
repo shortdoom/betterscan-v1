@@ -326,7 +326,9 @@ def generate_session_data_endpoint():
 
 @app.route("/protocol_view", methods=["GET"])
 def protocol_view():
-    contract_map_scan = ContractMapScan()
+    # NOTE: just look into all dirs, no download here
+    crawl_level = int(0)
+    contract_map_scan = ContractMapScan(crawl_level)
     contract_map_scan.gen_protocol_graph()
     protocol_data = nx.node_link_data(contract_map_scan.graph)
     return jsonify(protocol_data)
