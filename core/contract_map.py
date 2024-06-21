@@ -114,26 +114,30 @@ def generate_address_abi(variables_data):
 
 """
 
-Doesn't require an argument. Operates on files/out directory contents.
 Use ContractMap to generate external_addresses, _calls (and other) data for ContractMapScan to use.
+Running ContractMapScan requires data fields in sessionData.json from ContractMap.
 
+crawl_level: int, number of levels to crawl external calls sources
+    - default: None, crawl only target address
+    - 1: crawl 1st level of calls (e.g, state var addresses of target address)
+    - 0: crawl all levels of calls (e.g., state var addresses of target address and their state var addresses)
+    
 """
 
 
 class ContractMapScan:
-    def __init__(self, crawl_level=1):
+    def __init__(self, crawl_level=None):
         self.session_data_paths = find_all_session_data_paths()
         self.session_external_addresses = []
         self.session_external_addresses_paths = {}
         self.graph = nx.DiGraph()
+        self.crawl_level = crawl_level
 
-        # 0 = Infinite crawl
-        # 1 = 1st level deep (default)
-        # TODO: 2 (and so on) = 2nd level deep
-        # NOTE: 0 and 1 is enough, change to flag
-        self.crawl_level = int(crawl_level)
+        if crawl_level is not None:
+            self.crawl_level = int(crawl_level)
+        else:
+            self.crawl_level = None
 
-    # Scans all of the files/out for external calls to the same addresses
     def get_external_sources(self):
         external_addresses_found = []
         for session_data_path in self.session_data_paths:
@@ -141,28 +145,45 @@ class ContractMapScan:
             external_addresses_found.append(
                 session_data["contract_data"]["external_addresses"]
             )
+
+        print(
+            "executing get_external_sources for external_addresses_found:",
+            external_addresses_found,
+        )
+
         for addresses in external_addresses_found:
+
+            print("executing get_external_sources for addresses:", addresses)
+
             for name, address in addresses.items():
                 session_found = check_if_source_exists(address)
                 if not session_found:
+
+                    print("target get_external_sources for address:", address)
+
                     network = session_data["network_info"]["contract_network"]
                     external_target = f"{network}:{address}"
 
-                    # TODO: Refactor logic
-                    if address != ZERO_ADDRESS and self.crawl_level == 1:
-                        try:
-                            run_external_targets(external_target)
-                        except Exception as e:
-                            print("Error: run_external_targets(external_target)")
-                            continue
-                    elif address != ZERO_ADDRESS and self.crawl_level == 0:
-                        try:
-                            run_analysis(external_target, self.crawl_level)
-                        except Exception as e:
-                            print("Error: run_analysis(external_target)")
-                            continue
-                    elif address != ZERO_ADDRESS and self.crawl_level > 1:
-                        print("Crawl level not supported yet")
+                    if address != ZERO_ADDRESS:
+                        if self.crawl_level != 1:
+                            try:
+                                run_analysis(external_target, self.crawl_level)
+                            except Exception as e:
+                                print(
+                                    "Error: get_external_sources.run_analysis(external_target):",
+                                    e,
+                                )
+                                continue
+                        else:
+                            try:
+                                run_external_targets(external_target)
+                            except Exception as e:
+                                print(
+                                    "Error: get_external_sources.run_external_targets(external_target)"
+                                )
+                                continue
+                    else:
+                        print("ZERO_ADDRESS not supported")
                         continue
 
     def gen_protocol_graph(self):
@@ -182,12 +203,12 @@ class ContractMapScan:
                 "external_calls", []
             )
 
-            # TODO: Grab external_address path to sessionData.json, add to graph to use jump-to-session
+            # NOTE: Grab external_address path to sessionData.json, add to graph to use jump-to-session
             target_external_session_path = session_data.get("network_info", {}).get(
                 "data_directory", ""
             )
 
-            # TODO: Grab external_calls (expression) for target_address to use in graph
+            # NOTE: Grab external_calls (expression) for target_address to use in graph
             expressions = [
                 call
                 for call in target_external_calls_exp
@@ -227,14 +248,14 @@ class ContractMapScan:
 
 
 """
-class used to map what external addresses are being called by the target_address
+Used to map what external addresses are being called by the target_address
 
 target_address: <network>:<address> string, will look for the sessionData.json in files/out directory
 session_data: dict/json data structure (sessionData.json) object, for use with external classes
 
 script should be used with already generated sessionData.json files, it will not download contracts (TODO)
 
-returns: external_addresses, external_calls as part of sessionData object
+returns: external_addresses, external_calls as a part of the sessionData object
 
 """
 
@@ -242,6 +263,7 @@ returns: external_addresses, external_calls as part of sessionData object
 class ContractMap:
     def __init__(self, target_address: str = None, session_data: dict = None):
 
+        # TODO: Add support for CONFIG file
         self.w3 = Web3(Web3.HTTPProvider("https://eth.llamarpc.com"))
 
         if target_address:

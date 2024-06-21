@@ -233,18 +233,19 @@ def generate_session_data(path, api_key=None):
     return data, 200
 
 
-def compile_from_network(path, crawl=1):
+def compile_from_network(path, crawl=None):
     data, status_code = generate_session_data(path)
     
     if status_code != 200:
         return data, status_code
 
     # NOTE: Only used on first compilation
-    try:
-        contract_map_scan = ContractMapScan(crawl)
-        contract_map_scan.get_external_sources()
-    except Exception as e:
-        print(f"Error running ContractMapScan: {e}")
+    if crawl:
+        try:
+            contract_map_scan = ContractMapScan(crawl)
+            contract_map_scan.get_external_sources()
+        except Exception as e:
+            print(f"Error running ContractMapScan: {e}")
 
     return data, status_code
 
@@ -259,6 +260,9 @@ def index():
 
             path = request.form["path"]
             crawl = request.form["crawl"]
+            
+            if crawl == "":
+                crawl = None
             
             path_type = sort_path(path)
 
@@ -281,7 +285,6 @@ def index():
                     return jsonify(existing_data)
                 data, status_code = compile_from_network(path, crawl)
                 if status_code != 200:
-                    print("returned to app.py: 400 status code")
                     return data, status_code
                 else:
                     return jsonify(data)

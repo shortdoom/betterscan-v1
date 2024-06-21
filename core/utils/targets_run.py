@@ -59,7 +59,8 @@ def check_if_exists(path):
     conn.close()
     return exists == 1
 
-def run_analysis(targets, crawl=1):
+
+def run_analysis(targets, crawl=None):
     url = "http://127.0.0.1:5000/"
     timestamps = deque(maxlen=5)
 
@@ -80,7 +81,6 @@ def run_analysis(targets, crawl=1):
         timestamps.append(time.time())
 
         payload = "path={}&crawl={}".format(target, crawl)
-        print("crawling with code run_analysis: ", crawl)
         print("Executing payload:", payload)
 
         try:
@@ -88,18 +88,13 @@ def run_analysis(targets, crawl=1):
             if response.status_code == 200:
                 save_response_to_directory(target[0], response, TARGETS_DIRECTORY)
             else:
-                print("Error:", response.text)
-                # with open("fails.csv", "a", newline="") as file:
-                #     writer = csv.writer(file)
-                #     writer.writerow([payload, response.text])
-                print("Returning to ContractMapScan")
-                raise Exception("Error in run_analysis")
+                raise Exception(
+                    "Error receiving POST response from app.py: run_analysis()"
+                )
         except Exception as e:
             print("An error occurred:", e)
-            with open("fails.csv", "a", newline="") as file:
-                writer = csv.writer(file)
-                writer.writerow([payload, str(e)])
-                
+
+
 def run_external_targets(targets):
     url = "http://127.0.0.1:5000/generate_session_data"
     timestamps = deque(maxlen=5)
@@ -161,6 +156,7 @@ if __name__ == "__main__":
     parser.add_argument("--bountyId", help="Run targets against the app")
     parser.add_argument("--target", help="Single target to run against the app")
     parser.add_argument("--csv", help="CSV file containing targets")
+    parser.add_argument("--crawl_level", help="Crawl the target", default=None)
     args = parser.parse_args()
 
     if args.target:
@@ -170,4 +166,4 @@ if __name__ == "__main__":
     else:
         targets = get_targets(args.bountyId)
 
-    run_analysis(targets)
+    run_analysis(targets, args.crawl_level)
