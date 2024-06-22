@@ -12,129 +12,16 @@ import shutil
 import os
 import json
 
-app = Flask(__name__)
-app_dir = os.path.dirname(os.path.realpath(__file__))
-
-SUPPORTED_NETWORK = {
-    "mainet:": "etherscan.io",
-    "optim:": "optimistic.etherscan.io",
-    "goerli:": "goerli.etherscan.io",
-    "sepolia:": "sepolia.etherscan.io",
-    "tobalaba:": "tobalaba.etherscan.io",
-    "bsc:": "bscscan.com",
-    "testnet.bsc:": "testnet.bscscan.com",
-    "arbi:": "arbiscan.io",
-    "testnet.arbi:": "testnet.arbiscan.io",
-    "poly:": "polygonscan.com",
-    "mumbai:": "testnet.polygonscan.com",
-    "avax:": "snowtrace.io",
-    "testnet.avax:": "testnet.snowtrace.io",
-    "ftm:": "ftmscan.com",
-    "goerli.base:": "goerli.basescan.org",
-    "base:": "basescan.org",
-    "gno:": "gnosisscan.io",
-    "polyzk:": "zkevm.polygonscan.com",
-}
-
-SUPPORTED_NETWORK = dict(
-    sorted(SUPPORTED_NETWORK.items(), key=lambda item: -len(item[1]))
+from utils.data import (
+    SUPPORTED_NETWORK,
+    check_if_source_exists,
+    check_if_supported_network_in_url,
+    get_target_from_url,
+    load_source,
 )
 
-
-def check_if_source_exists(path):
-    """
-    Checks if a directory exists in the "files/out" directory that partially matches the provided path.
-    If a matching directory is found and contains a sessionData.json file, returns the path to the sessionData.json file.
-    Otherwise, returns None.
-    """
-    base_path = os.path.join(app_dir, "files", "out")
-
-    for root, dirs, _ in os.walk(base_path):
-        for dir_name in dirs:
-            if path in dir_name:
-                session_data_path = os.path.join(root, dir_name, "sessionData.json")
-                if os.path.isfile(session_data_path):
-                    return session_data_path
-                else:
-                    print(f"sessionData.json not found in directory: {dir_name}")
-
-    return None
-
-
-def check_if_supported_network_in_url(path):
-    """
-    Checks if the path contains any of the supported network URLs.
-    Returns True if it does, otherwise returns False.
-    """
-    for network_url in SUPPORTED_NETWORK.values():
-        if network_url in path:
-            return True
-    return False
-
-
-def _get_session_data(path):
-    """
-    Returns the session data from files/out/$network:address if it exists, otherwise returns None.
-    """
-    session_data_path = check_if_source_exists(path)
-    if session_data_path:
-        data = load_source(session_data_path)
-        return data
-    return None
-
-
-def get_target_from_url(path):
-    """
-    Parses the given path to extract the Ethereum address and identifies the network.
-    Returns a string in the format 'network:address' if successful.
-    """
-    parsed_url = urlparse(path)
-    domain = parsed_url.netloc
-    path_segments = parsed_url.path.split("/")
-    eth_address = next(
-        (
-            segment
-            for segment in path_segments
-            if re.match(r"^0x[a-fA-F0-9]{40}$", segment)
-        ),
-        None,
-    )
-
-    if eth_address is None:
-        return None
-
-    for network, url in SUPPORTED_NETWORK.items():
-        if url in domain:
-            return f"{network}{eth_address}"
-
-    return None
-
-
-def sort_path(path):
-    # Check if target is a GitHub repository
-    if re.match(r"^https://github\.com/[^/]+/[^/]+/?$", path):
-        return "repo_target"
-    # Check if target is a GitHub file
-    elif re.match(r"^https://github\.com/[^/]+/[^/]+/blob/.*$", path):
-        return "file_target"
-    # Check if target is of the form network:address
-    elif ":" in path and not "/" in path:
-        return "network_target"
-    # Check if target is a directory /path/to/directory
-    elif os.path.isdir(path):
-        return "dir_target"
-    # Check if target is a URL containing a supported network
-    elif check_if_supported_network_in_url(path):
-        return "network_url_target"
-
-
-def load_source(file_path):
-    """
-    Loads the JSON data from a file.
-    """
-    with open(file_path, "r") as f:
-        data = json.load(f)
-    return data
+app = Flask(__name__)
+app_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 def generate_session_data(path, api_key=None):
@@ -235,7 +122,7 @@ def generate_session_data(path, api_key=None):
 
 def compile_from_network(path, crawl=None):
     data, status_code = generate_session_data(path)
-    
+
     if status_code != 200:
         return data, status_code
 
@@ -260,10 +147,10 @@ def index():
 
             path = request.form["path"]
             crawl = request.form["crawl"]
-            
+
             if crawl == "":
                 crawl = None
-            
+
             path_type = sort_path(path)
 
             # target input etherscan url
@@ -615,7 +502,6 @@ def filter_functions(search_data, search_criteria):
 def filter_variables(search_data, search_criteria):
     pass
 
-
 def preprocess_all_reachable_from(functions_data, targets):
     # Initialize a set to keep track of all functions that are reachable from any of the targets
     all_reachable_from_any_target = set()
@@ -670,6 +556,35 @@ def preprocess_scan_data_for_impact(scan_data, impact):
         if entry.get("impact") == impact:
             impact_matches[entry.get("full_name")] = True
     return impact_matches
+
+
+def _get_session_data(path):
+    """
+    Returns the session data from files/out/$network:address if it exists, otherwise returns None.
+    """
+    session_data_path = check_if_source_exists(path)
+    if session_data_path:
+        data = load_source(session_data_path)
+        return data
+    return None
+
+
+def sort_path(path):
+    # Check if target is a GitHub repository
+    if re.match(r"^https://github\.com/[^/]+/[^/]+/?$", path):
+        return "repo_target"
+    # Check if target is a GitHub file
+    elif re.match(r"^https://github\.com/[^/]+/[^/]+/blob/.*$", path):
+        return "file_target"
+    # Check if target is of the form network:address
+    elif ":" in path and not "/" in path:
+        return "network_target"
+    # Check if target is a directory /path/to/directory
+    elif os.path.isdir(path):
+        return "dir_target"
+    # Check if target is a URL containing a supported network
+    elif check_if_supported_network_in_url(path):
+        return "network_url_target"
 
 
 def get_function_description(main_contract, function_data):

@@ -16,7 +16,7 @@ from slither.printers.summary.constructor_calls import _get_source_code
 from slither.tools.possible_paths.possible_paths import find_target_paths
 from slither.utils.function import get_function_id
 
-from utils.utils import get_detectors, get_slitherin_detectors, run_all_detectors
+from utils.detectors import get_detectors, get_slitherin_detectors, run_all_detectors
 
 from prompt import PromptClass
 from property_match import PropertyMatchClass

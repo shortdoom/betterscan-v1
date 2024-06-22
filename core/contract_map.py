@@ -4,7 +4,13 @@ import json
 import argparse
 from web3 import Web3
 import networkx as nx
-from utils.targets_run import run_external_targets, run_analysis
+from runner import run_external_targets, run_analysis
+from utils.data import (
+    check_if_source_exists,
+    find_all_session_data_paths,
+    get_session_data,
+    load_source,
+)
 
 """
 
@@ -17,61 +23,6 @@ TYPE_EXCEPTIONS = ["uint", "int", "bool", "bytes", "string", "mapping"]
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 app_dir = os.path.dirname(os.path.realpath(__file__))
 base_path = os.path.join(app_dir, "files", "out")
-
-
-# TODO: Move to shared.py
-
-def check_if_source_exists(path):
-    for root, dirs, _ in os.walk(base_path):
-        for dir_name in dirs:
-            if path in dir_name:
-                session_data_path = os.path.join(root, dir_name, "sessionData.json")
-                if os.path.isfile(session_data_path):
-                    return session_data_path
-                else:
-                    print(
-                        f"check_if_source_exists: sessionData.json not found in: {dir_name}"
-                    )
-
-    return None
-
-
-def find_all_session_data_paths():
-    dirs = os.listdir(base_path)
-    session_data_paths = []
-    for dir_name in dirs:
-
-        if os.path.isfile(os.path.join(base_path, dir_name)):
-            continue
-
-        session_data_path = os.path.join(base_path, dir_name, "sessionData.json")
-        if os.path.isfile(session_data_path):
-            session_data_paths.append(session_data_path)
-        else:
-            print(
-                f"find_all_session_data_paths: sessionData.json not found in: {dir_name}"
-            )
-
-    return session_data_paths
-
-
-def load_source(file_path):
-    """
-    Loads the JSON data from a file.
-    """
-    with open(file_path, "r") as f:
-        data = json.load(f)
-    return data
-
-
-def get_session_data(session_data_path):
-    """
-    Returns the session data from files/out/$network:address if it exists, otherwise returns None.
-    """
-    if session_data_path:
-        data = load_source(session_data_path)
-        return data
-    return None
 
 
 def generate_address_abi(variables_data):
