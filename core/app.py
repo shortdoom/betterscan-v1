@@ -2,9 +2,8 @@ from flask import Flask, jsonify, request, render_template
 from analyze import AnalyticsClass
 from analyze import PromptClass
 from downloader import DownloaderClass
-from contract_map import ContractMap
-from contract_map import ContractMapScan
-from urllib.parse import urlparse
+from netmap import ContractMap
+from netmap import ContractMapScan
 import networkx as nx
 from web3 import Web3
 import re

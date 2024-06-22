@@ -19,7 +19,7 @@ from slither.utils.function import get_function_id
 from utils.detectors import get_detectors, get_slitherin_detectors, run_all_detectors
 
 from prompt import PromptClass
-from property_match import PropertyMatchClass
+from property import PropertyMatchClass
 
 """ 
 python analyze.py files/out/mainet:0x1337/your_target_dir/TargetContract.sol --target_name TargetContractName  --config_dir files/out/mainet:0x1337
