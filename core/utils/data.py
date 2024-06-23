@@ -41,16 +41,16 @@ def check_if_source_exists(path):
     If a matching directory is found and contains a sessionData.json file, returns the path to the sessionData.json file.
     Otherwise, returns None.
     """
-    base_path = os.path.join(core_dir, "files", "out")
-
-    for root, dirs, _ in os.walk(base_path):
+    for root, dirs, _ in os.walk(files_dir):
         for dir_name in dirs:
             if path in dir_name:
                 session_data_path = os.path.join(root, dir_name, "sessionData.json")
                 if os.path.isfile(session_data_path):
                     return session_data_path
                 else:
-                    print(f"sessionData.json not found in directory: {dir_name}")
+                    print(
+                        f"check_if_source_exists: sessionData.json not found in: {dir_name}"
+                    )
 
     return None
 
@@ -64,6 +64,7 @@ def check_if_supported_network_in_url(path):
         if network_url in path:
             return True
     return False
+
 
 def get_target_from_url(path):
     """
@@ -91,6 +92,7 @@ def get_target_from_url(path):
 
     return None
 
+
 def load_source(file_path):
     """
     Loads the JSON data from a file.
@@ -98,22 +100,6 @@ def load_source(file_path):
     with open(file_path, "r") as f:
         data = json.load(f)
     return data
-
-############### CONTRACT_MAP.PY ####################
-
-def check_if_source_exists(path):
-    for root, dirs, _ in os.walk(files_dir):
-        for dir_name in dirs:
-            if path in dir_name:
-                session_data_path = os.path.join(root, dir_name, "sessionData.json")
-                if os.path.isfile(session_data_path):
-                    return session_data_path
-                else:
-                    print(
-                        f"check_if_source_exists: sessionData.json not found in: {dir_name}"
-                    )
-
-    return None
 
 
 def find_all_session_data_paths():
@@ -133,6 +119,7 @@ def find_all_session_data_paths():
             )
 
     return session_data_paths
+
 
 def get_session_data(session_data_path):
     """

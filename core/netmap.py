@@ -14,7 +14,7 @@ from utils.data import (
 
 """
 
-python contract_map.py mainet:0x29d2bcf0d70f95ce16697e645e2b76d218d66109
+python netmap.py mainet:0x29d2bcf0d70f95ce16697e645e2b76d218d66109
 
 """
 

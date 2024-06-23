@@ -6,6 +6,7 @@ import json
 import os
 import csv
 from collections import deque
+from datetime import datetime
 
 """
 python runner.py --bountyId <name> --csv <file_path> --target <network>:<address> --crawl_level <level>
@@ -61,11 +62,24 @@ def check_if_exists(path):
     return exists == 1
 
 
+def get_targets_from_csv(csv_file_path):
+    with open(csv_file_path, "r") as file:
+        reader = csv.reader(file)
+        targets = [row[0] for row in reader]
+    return targets
+
+
 def get_fail_file_path():
     """Generates the full path for the 'fails.csv' file within the 'files/out' directory."""
     fails_file_path = os.path.join(TARGETS_DIRECTORY, "fails.csv")
     os.makedirs(os.path.dirname(fails_file_path), exist_ok=True)
     return fails_file_path
+
+
+def log_error_to_file(message):
+    with open(get_fail_file_path(), "a", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(message.split(","))
 
 
 def run_analysis(targets, crawl=None):
@@ -94,18 +108,18 @@ def run_analysis(targets, crawl=None):
         try:
             response = requests.post(url, data=payload, headers=headers)
             if response.status_code != 200:
-                print("Error run_analysis(), response.text", response.text)
-                with open(get_fail_file_path(), "a", newline="") as file:
-                    writer = csv.writer(file)
-                    writer.writerow([payload, response.text])
+                error_message = (
+                    f"{datetime.now():%Y-%m-%d %H:%M:%S},{target},{response.text}"
+                )
+                print("Error run_analysis():", error_message)
+                log_error_to_file(error_message)
                 raise Exception(
                     "Error receiving POST response from app.py: run_analysis()"
                 )
         except Exception as e:
-            print("Error run_analysis():", e)
-            with open(get_fail_file_path(), "a", newline="") as file:
-                writer = csv.writer(file)
-                writer.writerow([payload, response.text])
+            error_message = f"{datetime.now():%Y-%m-%d %H:%M:%S},{target},{str(e)}"
+            print("Error run_analysis():", error_message)
+            log_error_to_file(error_message)
 
 
 def run_external_targets(targets):
@@ -134,22 +148,13 @@ def run_external_targets(targets):
         try:
             response = requests.post(url, data=payload, headers=headers)
             if response.status_code != 200:
-                print("Error run_external_targets():", response.text)
-                with open(get_fail_file_path(), "a", newline="") as file:
-                    writer = csv.writer(file)
-                    writer.writerow([payload, response.text])
+                error_message = f"{datetime.now():%Y-%m-%d %H:%M:%S},{target},{response.json().get('error', response.text)}"
+                print("Error run_external_targets():", error_message)
+                log_error_to_file(error_message)
         except Exception as e:
-            print("Error run_external_targets():", e)
-            with open(get_fail_file_path(), "a", newline="") as file:
-                writer = csv.writer(file)
-                writer.writerow([payload, str(e)])
-
-
-def get_targets_from_csv(csv_file_path):
-    with open(csv_file_path, "r") as file:
-        reader = csv.reader(file)
-        targets = [row[0] for row in reader]
-    return targets
+            error_message = f"{datetime.now():%Y-%m-%d %H:%M:%S},{target},{str(e)}"
+            print("Error run_external_targets():", error_message)
+            log_error_to_file(error_message)
 
 
 if __name__ == "__main__":
