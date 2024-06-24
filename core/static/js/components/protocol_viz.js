@@ -136,7 +136,7 @@ export function createProtocolMap(target_div = "#dashboard") {
         .attr("r", 10)
         .attr("fill", (d) => {
           if (d.address === targetAddress) {
-            return "green"; // Color the node green if it matches the address in the URL
+            return "green";
           } else if (d.label === "ZERO_ADDRESS") {
             return "grey";
           } else {
@@ -246,9 +246,7 @@ export function createProtocolMap(target_div = "#dashboard") {
 
 function addLegend(svg) {
   const svgHeight = window.innerHeight;
-
-  // Calculate the starting Y position of the legend dynamically to move it sufficiently up
-  const startingYPosition = svgHeight - 220; // Adjusted to move up the entire legend
+  const startingYPosition = svgHeight - 220; 
 
   const legend = svg
     .append("g")
@@ -259,7 +257,7 @@ function addLegend(svg) {
     { color: "red", text: "Smart Contract" },
     { color: "white", text: "Library / Interface" },
     { color: "grey", text: "ZERO_ADDRESS" },
-    { color: "green", text: "Active Contract" } // Added new entry for Active Contract
+    { color: "green", text: "Active Contract" }
   ];
 
   // Positioning the nodes and their labels
@@ -321,7 +319,7 @@ function addLegend(svg) {
     .attr("x2", 30)
     .attr("y2", additionalElementsStartY + 50)
     .attr("stroke", "blue")
-    .attr("stroke-width", 2); // Regular line without arrow
+    .attr("stroke-width", 2);
 
   legend
     .append("text")
@@ -339,7 +337,7 @@ function getTargetAddressFromURL() {
   const sessionId = queryParams.get("session_id");
   if (sessionId) {
     const parts = sessionId.split(':');
-    return parts.length > 1 ? parts[1] : null; // Assuming the address is after the first colon
+    return parts.length > 1 ? parts[1] : null;
   }
   return null;
 }
