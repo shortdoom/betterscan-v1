@@ -1,3 +1,5 @@
+const targetAddress = getTargetAddressFromURL();
+
 export function createProtocolMap(target_div = "#dashboard") {
   const dashboard = document.getElementById("dashboard");
   const width = dashboard.offsetWidth;
@@ -133,7 +135,9 @@ export function createProtocolMap(target_div = "#dashboard") {
         .join("circle")
         .attr("r", 10)
         .attr("fill", (d) => {
-          if (d.label === "ZERO_ADDRESS") {
+          if (d.address === targetAddress) {
+            return "green"; // Color the node green if it matches the address in the URL
+          } else if (d.label === "ZERO_ADDRESS") {
             return "grey";
           } else {
             return d.connected ? "red" : "white";
@@ -241,27 +245,31 @@ export function createProtocolMap(target_div = "#dashboard") {
 }
 
 function addLegend(svg) {
-  const totalLegendHeight = 200; // Increase the total height to accommodate the new legend
-  let svgHeight = window.innerHeight;
+  const svgHeight = window.innerHeight;
+
+  // Calculate the starting Y position of the legend dynamically to move it sufficiently up
+  const startingYPosition = svgHeight - 220; // Adjusted to move up the entire legend
 
   const legend = svg
     .append("g")
     .attr("class", "legend")
-    .attr("transform", `translate(10, ${svgHeight - totalLegendHeight})`);
+    .attr("transform", `translate(10, ${startingYPosition})`);
 
   const nodeColors = [
     { color: "red", text: "Smart Contract" },
-    { color: "white", text: "Library" },
-    { color: "grey", text: "ZERO_ADDRESS" }, // Add grey circle legend
+    { color: "white", text: "Library / Interface" },
+    { color: "grey", text: "ZERO_ADDRESS" },
+    { color: "green", text: "Active Contract" } // Added new entry for Active Contract
   ];
 
+  // Positioning the nodes and their labels
   const nodeLegend = legend
     .selectAll(".node-legend")
     .data(nodeColors)
     .enter()
     .append("g")
     .attr("class", "node-legend")
-    .attr("transform", (d, i) => `translate(0, ${i * 30 + 10})`); // Increase the vertical spacing
+    .attr("transform", (d, i) => `translate(0, ${i * 25})`);
 
   nodeLegend
     .append("circle")
@@ -277,11 +285,13 @@ function addLegend(svg) {
     .attr("font-family", "monospace")
     .attr("font-size", 14);
 
-  // Adding legend for the arrows
+  // Adjusted y positions for the arrows and link information
+  const additionalElementsStartY = nodeColors.length * 25 + 20;
+
   legend
     .append("text")
     .attr("x", 0)
-    .attr("y", 100) // Adjust the y position
+    .attr("y", additionalElementsStartY)
     .text("Arrow shows the direction of the call")
     .attr("font-family", "monospace")
     .attr("font-size", 14);
@@ -289,18 +299,17 @@ function addLegend(svg) {
   legend
     .append("line")
     .attr("x1", 0)
-    .attr("y1", 110) // Adjust the y position
+    .attr("y1", additionalElementsStartY + 10)
     .attr("x2", 30)
-    .attr("y2", 110)
+    .attr("y2", additionalElementsStartY + 10)
     .attr("stroke", "black")
     .attr("stroke-width", 2)
-    .attr("marker-end", "url(#arrow)"); // Using the same arrow marker
+    .attr("marker-end", "url(#arrow)");
 
-  // Adding legend for the line representing external calls without arrows
   legend
     .append("text")
     .attr("x", 0)
-    .attr("y", 130) // Adjust the y position
+    .attr("y", additionalElementsStartY + 40)
     .text("Link represents an external call between contracts")
     .attr("font-family", "monospace")
     .attr("font-size", 14);
@@ -308,18 +317,29 @@ function addLegend(svg) {
   legend
     .append("line")
     .attr("x1", 0)
-    .attr("y1", 140) // Adjust the y position
+    .attr("y1", additionalElementsStartY + 50)
     .attr("x2", 30)
-    .attr("y2", 140)
+    .attr("y2", additionalElementsStartY + 50)
     .attr("stroke", "blue")
     .attr("stroke-width", 2); // Regular line without arrow
 
-  // Adding legend for the arrows
   legend
     .append("text")
     .attr("x", 0)
-    .attr("y", 160) // Adjust the y position
+    .attr("y", additionalElementsStartY + 70)
     .text("Click on a node to see more details")
     .attr("font-family", "monospace")
     .attr("font-size", 14);
+}
+
+
+
+function getTargetAddressFromURL() {
+  const queryParams = new URLSearchParams(window.location.search);
+  const sessionId = queryParams.get("session_id");
+  if (sessionId) {
+    const parts = sessionId.split(':');
+    return parts.length > 1 ? parts[1] : null; // Assuming the address is after the first colon
+  }
+  return null;
 }
