@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request, render_template
+import numpy as np
 from analyze import AnalyticsClass
 from analyze import PromptClass
 from downloader import DownloaderClass
@@ -210,13 +211,62 @@ def generate_session_data_endpoint():
     return jsonify(data)
 
 
-@app.route("/protocol_view", methods=["GET"])
-def protocol_view():
-    # NOTE: just look into all dirs, no download here
+@app.route("/protocol_analysis", methods=["GET"])
+def protocol_analysis():
     crawl_level = int(0)
     contract_map_scan = ContractMapScan(crawl_level)
     contract_map_scan.gen_protocol_graph()
     protocol_data = nx.node_link_data(contract_map_scan.graph)
+
+    strongly_connected_components = list(
+        nx.strongly_connected_components(contract_map_scan.graph)
+    )
+    subgraphs = []
+
+    # Create a subgraph for each strongly connected component
+    for component in strongly_connected_components:
+        subgraph = contract_map_scan.graph.subgraph(component)
+        subgraph_data = nx.node_link_data(subgraph)
+        # Check if the subgraph has links
+        if subgraph_data["links"]:  # This checks if the 'links' list is not empty
+            subgraphs.append(subgraph_data)  # Only add subgraphs with non-empty links
+
+    return jsonify(subgraphs)
+
+
+@app.route("/protocol_view", methods=["GET"])
+def protocol_view():
+    crawl_level = int(0)
+    contract_map_scan = ContractMapScan(crawl_level)
+    contract_map_scan.gen_protocol_graph()
+    protocol_data = nx.node_link_data(contract_map_scan.graph)
+
+    # Compute k-core related structures
+    k_core = nx.k_core(contract_map_scan.graph)
+    k_crust = nx.k_crust(contract_map_scan.graph)
+    k_shell = nx.k_shell(contract_map_scan.graph)
+    k_corona = nx.k_corona(contract_map_scan.graph, k=1)
+
+    # Calculate degree centrality for each node
+    degree_centrality = nx.degree_centrality(contract_map_scan.graph)
+
+    # Determine a threshold for core nodes (e.g 75th percentile)
+    threshold = np.percentile(list(degree_centrality.values()), 75)
+
+    # Classify nodes as 'core' or 'periphery' based on the threshold
+    core_periphery_map = {
+        node: "core" if centrality > threshold else "periphery"
+        for node, centrality in degree_centrality.items()
+    }
+    
+    for node in protocol_data["nodes"]:
+        node["core_periphery"] = core_periphery_map.get(node["id"], "periphery")
+        node_id = node["id"]
+        node["k_core"] = node_id in k_core
+        node["k_crust"] = node_id in k_crust
+        node["k_shell"] = node_id in k_shell
+        node["k_corona"] = node_id in k_corona
+
     return jsonify(protocol_data)
 
 
@@ -500,6 +550,7 @@ def filter_functions(search_data, search_criteria):
 
 def filter_variables(search_data, search_criteria):
     pass
+
 
 def preprocess_all_reachable_from(functions_data, targets):
     # Initialize a set to keep track of all functions that are reachable from any of the targets

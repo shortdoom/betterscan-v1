@@ -1,7 +1,9 @@
 import { populateSessionStorageDropdown } from "./navigation.js";
-import {createProtocolMap} from "./protocol_viz.js";
+import {createProtocolMap, createProtocolAnalysis} from "./protocol_viz.js";
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
   populateSessionStorageDropdown();
-  createProtocolMap();
+  await createProtocolMap();  // Ensure this completes before starting the next
+  createProtocolAnalysis();
 });
+

@@ -729,3 +729,20 @@ form label {
   font-size: 12px;
   color: #333;
 }
+
+.component {
+  margin-bottom: 20px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.component h3 {
+  margin-top: 0;
+}
+
+pre {
+  background-color: #f4f4f4;
+  border: 1px solid #ddd;
+  padding: 5px;
+}

@@ -97,20 +97,11 @@ class ContractMapScan:
                 session_data["contract_data"]["external_addresses"]
             )
 
-        print(
-            "executing get_external_sources for external_addresses_found:",
-            external_addresses_found,
-        )
-
         for addresses in external_addresses_found:
-
-            print("executing get_external_sources for addresses:", addresses)
 
             for name, address in addresses.items():
                 session_found = check_if_source_exists(address)
                 if not session_found:
-
-                    print("target get_external_sources for address:", address)
 
                     network = session_data["network_info"]["contract_network"]
                     external_target = f"{network}:{address}"
@@ -196,6 +187,11 @@ class ContractMapScan:
                     address=external_address,
                 )
                 self.graph.add_edge(target_address, external_address)
+
+    def analyze_protocol_graph(self):
+        for node in self.graph.nodes:
+            print(node)
+            print(self.graph.nodes[node])
 
 
 """
