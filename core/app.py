@@ -259,9 +259,17 @@ def protocol_view():
         for node, centrality in degree_centrality.items()
     }
     
+    # Analyze strongly connected components that have links
+    scc_ids = set()
+    for component in nx.strongly_connected_components(contract_map_scan.graph):
+        subgraph = contract_map_scan.graph.subgraph(component)
+        if subgraph.size() > 0:  # Check if the subgraph has links
+            scc_ids.update(component)
+    
     for node in protocol_data["nodes"]:
         node["core_periphery"] = core_periphery_map.get(node["id"], "periphery")
         node_id = node["id"]
+        node["scc_active"] = node_id in scc_ids
         node["k_core"] = node_id in k_core
         node["k_crust"] = node_id in k_crust
         node["k_shell"] = node_id in k_shell

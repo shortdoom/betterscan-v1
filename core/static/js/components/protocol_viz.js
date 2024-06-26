@@ -127,18 +127,12 @@ export function createProtocolMap(target_div = "#dashboard") {
           } else if (d.label === "ZERO_ADDRESS") {
             return "black"; // Zero address special case
           } else if (d.core_periphery === "core") {
-            return "blue"; // Core node color
-          } else if (d.core_periphery === "periphery") {
-            return "grey"; // Periphery node color
-            // } else if (d.k_crust) {
-            //   return "purple";  // Crust node color
-            // } else if (d.k_shell) {
-            //   return "blue";  // Shell node color
-            // } else if (d.k_corona) {
-            //   return "black";  // Corona node color
+            return "red"; // Highest k-core nodes
+          } else if (d.scc_active) {
+            return "blue"; // Strongly connected nodes
           } else {
             // Color by strongly connected component
-            return d.connected ? "red" : "white";
+            return d.connected ? "gold" : "white";
           }
         })
         .call(drag(simulation))
@@ -334,18 +328,21 @@ export function createProtocolAnalysis(target_div = "#protocolAnalysis") {
 
 function addLegend(svg) {
   const svgHeight = window.innerHeight;
-  const startingYPosition = svgHeight - 220;
+  // Adjusting the starting position upwards to make space for the new legend entry
+  const startingYPosition = svgHeight - 250; // Increased space by adjusting this value
 
   const legend = svg
     .append("g")
     .attr("class", "legend")
     .attr("transform", `translate(10, ${startingYPosition})`);
 
+  // Adding the new "SCC" node color to the nodeColors array
   const nodeColors = [
-    { color: "red", text: "Smart Contract" },
-    { color: "white", text: "Library / Interface" },
-    { color: "blue", text: "Core Contracts" },
-    { color: "green", text: "Active Contract" },
+    { color: "red", text: "Core Contract (high k-)" },
+    { color: "gold", text: "Periphery Contract (low k-)" },
+    { color: "white", text: "Library / Interface (isolates)" },
+    { color: "blue", text: "Strong Cluster" },
+    { color: "green", text: "Active Session" },
   ];
 
   // Positioning the nodes and their labels
