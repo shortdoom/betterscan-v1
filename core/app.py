@@ -250,7 +250,7 @@ def protocol_view():
     # Calculate degree centrality for each node
     degree_centrality = nx.degree_centrality(contract_map_scan.graph)
 
-    # Determine a threshold for core nodes (e.g 75th percentile)
+    # Determine a threshold for core nodes (e.g., 75th percentile)
     threshold = np.percentile(list(degree_centrality.values()), 75)
 
     # Classify nodes as 'core' or 'periphery' based on the threshold
@@ -258,14 +258,58 @@ def protocol_view():
         node: "core" if centrality > threshold else "periphery"
         for node, centrality in degree_centrality.items()
     }
-    
+
     # Analyze strongly connected components that have links
     scc_ids = set()
+    scc_sizes = []
     for component in nx.strongly_connected_components(contract_map_scan.graph):
         subgraph = contract_map_scan.graph.subgraph(component)
         if subgraph.size() > 0:  # Check if the subgraph has links
             scc_ids.update(component)
+            scc_sizes.append(len(component))  # Collect sizes for printing later
+
+    # Count only nodes classified as 'core' and 'periphery'
+    all_nodes = contract_map_scan.graph.nodes()
+    core_nodes_count = sum(
+        1
+        for node in contract_map_scan.graph.nodes()
+        if core_periphery_map[node] == "core"
+    )
+    periphery_nodes_count = sum(
+        1
+        for node in contract_map_scan.graph.nodes()
+        if core_periphery_map[node] == "periphery"
+    )
+
+    # Extract centrality values for core nodes
+    # Extract centrality values and corresponding labels for core nodes
+    core_node_centralities = {
+        node: centrality
+        for node, centrality in degree_centrality.items()
+        if core_periphery_map[node] == "core"
+    }
+
+    if core_node_centralities:
+        max_node = max(core_node_centralities, key=core_node_centralities.get)
+        min_node = min(core_node_centralities, key=core_node_centralities.get)
+        print(
+            f"Node with highest connectivity value: {max_node} (Centrality: {core_node_centralities[max_node]})"
+        )
+        print(
+            f"Node with smallest connectivity value: {min_node} (Centrality: {core_node_centralities[min_node]})"
+        )
+    else:
+        print("No core nodes identified based on the threshold.")
+
+    # TODO: Total connectivity analysis
     
+    print(f"Sum of all nodes: {len(all_nodes)}")
+    print(f"Sum of core nodes: {core_nodes_count}")
+    print(f"Sum of periphery nodes: {periphery_nodes_count}")
+    print(f"Cluster count: {len(scc_sizes)}")
+    for size in sorted(scc_sizes, reverse=True):
+        print(f"Cluster Size: {size}")
+
     for node in protocol_data["nodes"]:
         node["core_periphery"] = core_periphery_map.get(node["id"], "periphery")
         node_id = node["id"]
