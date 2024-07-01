@@ -1,155 +1,31 @@
 from flask import Flask, jsonify, request, render_template
+import numpy as np
 from analyze import AnalyticsClass
 from analyze import PromptClass
 from downloader import DownloaderClass
-from urllib.parse import urlparse
+from netmap import ContractMap
+from netmap import ContractMapScan
+import networkx as nx
+from itertools import combinations
 from web3 import Web3
-from git import Repo
 import re
 import shutil
 import os
 import json
 
+from utils.data import (
+    SUPPORTED_NETWORK,
+    check_if_source_exists,
+    check_if_supported_network_in_url,
+    get_target_from_url,
+    load_source,
+)
+
 app = Flask(__name__)
 app_dir = os.path.dirname(os.path.realpath(__file__))
 
-SUPPORTED_NETWORK = {
-    "mainet:": "etherscan.io",
-    "optim:": "optimistic.etherscan.io",
-    "goerli:": "goerli.etherscan.io",
-    "sepolia:": "sepolia.etherscan.io",
-    "tobalaba:": "tobalaba.etherscan.io",
-    "bsc:": "bscscan.com",
-    "testnet.bsc:": "testnet.bscscan.com",
-    "arbi:": "arbiscan.io",
-    "testnet.arbi:": "testnet.arbiscan.io",
-    "poly:": "polygonscan.com",
-    "mumbai:": "testnet.polygonscan.com",
-    "avax:": "snowtrace.io",
-    "testnet.avax:": "testnet.snowtrace.io",
-    "ftm:": "ftmscan.com",
-    "goerli.base:": "goerli.basescan.org",
-    "base:": "basescan.org",
-    "gno:": "gnosisscan.io",
-    "polyzk:": "zkevm.polygonscan.com",
-}
 
-SUPPORTED_NETWORK = dict(
-    sorted(SUPPORTED_NETWORK.items(), key=lambda item: -len(item[1]))
-)
-
-
-def check_if_source_exists(path):
-    """
-    Checks if a directory exists in the "files/out" directory that partially matches the provided path.
-    If a matching directory is found and contains a sessionData.json file, returns the path to the sessionData.json file.
-    Otherwise, returns None.
-    """
-    base_path = os.path.join(app_dir, "files", "out")
-    for root, dirs, _ in os.walk(base_path):
-        for dir_name in dirs:
-            if path in dir_name:
-                session_data_path = os.path.join(root, dir_name, "sessionData.json")
-
-                if os.path.isfile(session_data_path):
-                    return session_data_path
-                else:
-                    print(f"sessionData.json not found in directory: {dir_name}")
-    print(f"No matching directory found for path: {path}")
-    return None
-
-
-def check_if_supported_network_in_url(path):
-    """
-    Checks if the path contains any of the supported network URLs.
-    Returns True if it does, otherwise returns False.
-    """
-    for network_url in SUPPORTED_NETWORK.values():
-        if network_url in path:
-            return True
-    return False
-
-
-def _get_session_data(path):
-    """
-    Returns the session data from files/out/$network:address if it exists, otherwise returns None.
-    """
-    session_data_path = check_if_source_exists(path)
-    if session_data_path:
-        data = load_source(session_data_path)
-        return data
-    return None
-
-
-def get_target_from_url(path):
-    """
-    Parses the given path to extract the Ethereum address and identifies the network.
-    Returns a string in the format 'network:address' if successful.
-    """
-    parsed_url = urlparse(path)
-    domain = parsed_url.netloc
-    path_segments = parsed_url.path.split("/")
-    eth_address = next(
-        (
-            segment
-            for segment in path_segments
-            if re.match(r"^0x[a-fA-F0-9]{40}$", segment)
-        ),
-        None,
-    )
-
-    if eth_address is None:
-        return None
-
-    for network, url in SUPPORTED_NETWORK.items():
-        if url in domain:
-            return f"{network}{eth_address}"
-
-    return None
-
-
-def sort_path(path):
-    # Check if target is a GitHub repository
-    if re.match(r"^https://github\.com/[^/]+/[^/]+/?$", path):
-        return "repo_target"
-    # Check if target is a GitHub file
-    elif re.match(r"^https://github\.com/[^/]+/[^/]+/blob/.*$", path):
-        return "file_target"
-    # Check if target is of the form network:address
-    elif ":" in path and not "/" in path:
-        return "network_target"
-    # Check if target is a directory /path/to/directory
-    elif os.path.isdir(path):
-        return "dir_target"
-    # Check if target is a URL containing a supported network
-    elif check_if_supported_network_in_url(path):
-        return "network_url_target"
-
-
-def get_github(path):
-    """
-    Clones the GitHub repository to the "files/out" directory.
-    """
-    try:
-        repo_name = os.path.basename(urlparse(path).path)
-        clone_path = os.path.join("files", "out", repo_name)
-        Repo.clone_from(path, clone_path)
-        return os.path.abspath(clone_path)
-    except Exception as e:
-        print(f"Error cloning repository: {e}")
-        return None
-
-
-def load_source(file_path):
-    """
-    Loads the JSON data from a file.
-    """
-    with open(file_path, "r") as f:
-        data = json.load(f)
-    return data
-
-
-def compile_from_network(path, api_key=None):
+def generate_session_data(path, api_key=None):
     if not path:
         return "Missing target network:0x...", 400
 
@@ -167,8 +43,8 @@ def compile_from_network(path, api_key=None):
     session_data_path = check_if_source_exists(path)
 
     if session_data_path:
-        contract_data = load_source(session_data_path)
-        return contract_data
+        data = load_source(session_data_path)
+        return data
 
     try:
         if api_key:
@@ -222,56 +98,44 @@ def compile_from_network(path, api_key=None):
         "scan_results": target.output_scan,
     }
 
+    try:
+        contract_map = ContractMap(path, data)
+        contract_map.run_map()
+
+        # NOTE: Generates data for a single contract only!
+        target.output_contract["external_calls"] = contract_map.external_calls
+        target.output_contract["external_addresses"] = contract_map.external_addresses
+
+        for var in target.output_variables:
+            for key, value in contract_map.external_addresses.items():
+                if var["variable_name"] == key:
+                    var["address"] = value
+
+    except Exception as e:
+        print(f"Error fetching variable addresses: {e}")
+
+    # NOTE: sessionData.json is created only here
     with open(os.path.join(source.output_dir, "sessionData.json"), "w") as f:
         json.dump(data, f, indent=4)
 
     return data, 200
 
 
-def compile_from_github(path, contract_name):
-    """
-    Compile contract from github repository
-    """
-    dir = get_github(path)
+def compile_from_network(path, crawl=None):
+    data, status_code = generate_session_data(path)
 
-    try:
-        print(f"Init AnalyticsClass for {contract_name}... in gh repo {path}")
-        print(f"This can take some time...")
-        target = AnalyticsClass(
-            dir,  # target path/template_directory (hh or forge)
-            contract_name,  # target Contract name
-        )
-        print(f"Successfully intiated {contract_name}...")
-        print(f"Running analysis...")
-        target.run_analysis()
-    except Exception as e:
-        print(f"Error running AnalyticsClass: {e}")
-        return f"Error running AnalyticsClass", 400
+    if status_code != 200:
+        return data, status_code
 
-    try:
-        prompter = PromptClass()
-        all_strategies = prompter.get_all_prompt_strategies()
-        for function_data in target.output_functions:
-            function_data["description"] = get_function_description(
-                contract_name, function_data
-            )
-            function_data["prompts"] = {strategy: "" for strategy in all_strategies}
-    except Exception as e:
-        print(f"Error generating available strategies: {str(e)}")
+    # NOTE: Only used on first compilation
+    if crawl:
+        try:
+            contract_map_scan = ContractMapScan(crawl)
+            contract_map_scan.get_external_sources()
+        except Exception as e:
+            print(f"Error running ContractMapScan: {e}")
 
-    data = {
-        "network_info": [],
-        "contract_data": target.output_contract,
-        "functions_data": target.output_functions,
-        "variables_data": target.output_variables,
-        "source_code": target.output_sources,
-        "scan_results": target.output_scan,
-    }
-
-    with open(os.path.join(dir, "sessionData.json"), "w") as f:
-        json.dump(data, f, indent=4)
-
-    return data, 200
+    return data, status_code
 
 
 # region Endpoints
@@ -283,50 +147,187 @@ def index():
         try:
 
             path = request.form["path"]
-            param = request.form["param"]
+            crawl = request.form["crawl"]
+
+            if crawl == "":
+                crawl = None
+
             path_type = sort_path(path)
 
+            # target input etherscan url
             if path_type == "network_url_target":
                 network_address = get_target_from_url(path)
                 if network_address:
-                    data, status_code = compile_from_network(network_address)
-                    print("status_code", status_code)
+                    data, status_code = compile_from_network(network_address, crawl)
                     if status_code == 400:
                         return data, status_code
+                    else:
+                        return jsonify(data)
                 else:
-                    return (
-                        "URL does not match any supported network or contains no valid EVM address",
-                        400,
-                    )
+                    return "Invalid URL target", 400
 
-            # NOTE: Github integration is experimental, breaks often
-            if path_type == "repo_target" or path_type == "file_target":
-                data, status_code = compile_from_github(path, param)
-                if status_code == 400:
-                    return data, status_code
-            elif path_type == "network_target":
-
+            # target input <network>:<address>
+            if path_type == "network_target":
                 existing_data = _get_session_data(path)
                 if existing_data:
                     return jsonify(existing_data)
-
-                data, status_code = compile_from_network(path, param)
-
-                if status_code == 400:
+                data, status_code = compile_from_network(path, crawl)
+                if status_code != 200:
                     return data, status_code
-            elif path_type == "dir_target":
-                # NOTE: WIP, only works for already analyzed target, generate sessionData with analyze.py
+                else:
+                    return jsonify(data)
+
+            # target input ~/files/out/path/to/dir
+            if path_type == "dir_target":
                 session_data_path = os.path.join(path, "sessionData.json")
                 if os.path.isfile(session_data_path):
-                    data = load_source(session_data_path)
+                    return jsonify(load_source(session_data_path))
                 else:
                     return "Invalid directory target", 400
 
-            return jsonify(data)
+            # target input git clone
+            if path_type == "repo_target" or path_type == "file_target":
+                message = (
+                    f"Compiling from GitHub repository is not supported yet: {path}"
+                )
+                return jsonify({"message": message}), 400
+
         except Exception as e:
             return jsonify({"error": str(e)}), 400
     else:
         return render_template("index.html")
+
+
+@app.route("/generate_session_data", methods=["POST"])
+def generate_session_data_endpoint():
+    path = request.json.get("path")
+    data, status_code = generate_session_data(path)
+
+    if status_code != 200:
+        return (
+            jsonify({"message": "Generating session data for external target failed"}),
+            400,
+        )
+
+    return jsonify(data)
+
+
+@app.route("/protocol_analysis", methods=["GET"])
+def protocol_analysis():
+    crawl_level = int(0)
+    contract_map_scan = ContractMapScan(crawl_level)
+    contract_map_scan.gen_protocol_graph()
+    protocol_data = nx.node_link_data(contract_map_scan.graph)
+
+    strongly_connected_components = list(
+        nx.strongly_connected_components(contract_map_scan.graph)
+    )
+    subgraphs = []
+
+    # Create a subgraph for each strongly connected component
+    for component in strongly_connected_components:
+        subgraph = contract_map_scan.graph.subgraph(component)
+        subgraph_data = nx.node_link_data(subgraph)
+        # Check if the subgraph has links
+        if subgraph_data["links"]:  # This checks if the 'links' list is not empty
+            subgraphs.append(subgraph_data)  # Only add subgraphs with non-empty links
+
+    return jsonify(subgraphs)
+
+
+@app.route("/protocol_view", methods=["GET"])
+def protocol_view():
+    crawl_level = int(0)
+    contract_map_scan = ContractMapScan(crawl_level)
+    contract_map_scan.gen_protocol_graph()
+    protocol_data = nx.node_link_data(contract_map_scan.graph)
+
+    # Compute k-core related structures
+    k_core = nx.k_core(contract_map_scan.graph)
+    k_crust = nx.k_crust(contract_map_scan.graph)
+    k_shell = nx.k_shell(contract_map_scan.graph)
+    k_corona = nx.k_corona(contract_map_scan.graph, k=1)
+
+    # Calculate degree centrality for each node
+    degree_centrality = nx.degree_centrality(contract_map_scan.graph)
+
+    # Determine a threshold for core nodes (e.g., 75th percentile)
+    threshold = np.percentile(list(degree_centrality.values()), 75)
+
+    # Classify nodes as 'core' or 'periphery' based on the threshold
+    core_periphery_map = {
+        node: "core" if centrality > threshold else "periphery"
+        for node, centrality in degree_centrality.items()
+    }
+
+    # Analyze strongly connected components that have links
+    scc_ids = set()
+    scc_sizes = []
+    for component in nx.strongly_connected_components(contract_map_scan.graph):
+        subgraph = contract_map_scan.graph.subgraph(component)
+        if subgraph.size() > 0:  # Check if the subgraph has links
+            scc_ids.update(component)
+            scc_sizes.append(len(component))  # Collect sizes for printing later
+
+    all_nodes = contract_map_scan.graph.nodes()
+    isolates = list(nx.isolates(contract_map_scan.graph))
+    core_nodes_count = sum(
+        1
+        for node in contract_map_scan.graph.nodes()
+        if core_periphery_map[node] == "core"
+    )
+    periphery_nodes_count = sum(
+        1
+        for node in contract_map_scan.graph.nodes()
+        if core_periphery_map[node] == "periphery"
+    )
+    core_node_centralities = {
+        node: centrality
+        for node, centrality in degree_centrality.items()
+        if core_periphery_map[node] == "core"
+    }
+    clustering_coeff = nx.average_clustering(nx.Graph(contract_map_scan.graph))
+
+    if core_node_centralities:
+        max_node = max(core_node_centralities, key=core_node_centralities.get)
+        min_node = min(core_node_centralities, key=core_node_centralities.get)
+        cores_clustering = {
+            node: nx.clustering(nx.Graph(contract_map_scan.graph), node)
+            for node in core_node_centralities
+            if nx.clustering(nx.Graph(contract_map_scan.graph), node) > 0
+        }
+
+        print(
+            f"Node with highest connectivity value: {max_node} (Centrality: {core_node_centralities[max_node]})"
+        )
+        print(
+            f"Node with smallest connectivity value: {min_node} (Centrality: {core_node_centralities[min_node]})"
+        )
+    else:
+        print("No core nodes identified based on the threshold.")
+
+    print(f"Clustering coeff: {clustering_coeff}")
+    print(f"Cores coeff: {cores_clustering}")
+    print(f"Sum of all nodes: {len(all_nodes)}")
+    print(f"Sum of all isolates: {len(isolates)}")
+    print(f"Sum of core nodes: {core_nodes_count}")
+    print(f"Sum of periphery nodes: {periphery_nodes_count}")
+    print(f"Cluster count: {len(scc_sizes)}")
+    
+    for size in sorted(scc_sizes, reverse=True):
+        print(f"Cluster Size: {size}")
+
+    for node in protocol_data["nodes"]:
+        node_id = node["id"]
+        node["core_periphery"] = core_periphery_map.get(node["id"])
+        node["scc_active"] = node_id in scc_ids
+
+    return jsonify(protocol_data)
+
+
+@app.route("/protocol_view.html")
+def protocol_view_html():
+    return render_template("protocol_view.html")
 
 
 @app.route("/get_session_data", methods=["GET"])
@@ -339,7 +340,12 @@ def get_session_data():
         return "Session data not found", 404
 
 
-@app.route("/list_sessions")
+@app.route("/report", methods=["GET"])
+def report():
+    return render_template("report.html")
+
+
+@app.route("/list_sessions", methods=["GET"])
 def list_sessions():
     try:
         base_path = os.path.join(app_dir, "files", "out")
@@ -354,29 +360,6 @@ def list_sessions():
     except Exception as e:
         print(f"Error listing sessions: {e}")
         return jsonify({"error": "Failed to list sessions", "details": str(e)}), 500
-
-
-@app.route("/report", methods=["GET", "POST"])
-def report():
-    if request.method == "POST":
-        try:
-            data = request.get_json()
-            session_data = data.get("sessionData")
-            search_criteria = data.get("searchCriteria")
-
-            filtered_functions = filter_functions(session_data, search_criteria)
-            filtered_variables = filter_variables(session_data, search_criteria)
-
-            return jsonify(
-                {
-                    "filtered_functions": filtered_functions,
-                    "filtered_variables": filtered_variables,
-                }
-            )
-        except Exception as e:
-            return jsonify({"error": str(e)}), 400
-    else:
-        return render_template("report.html")
 
 
 @app.route("/prompt", methods=["POST"])
@@ -650,23 +633,22 @@ def preprocess_all_reachable_from(functions_data, targets):
 
 def preprocess_find_target_reachable(functions_data, targets):
     # Initialize a set to keep track of all functions that are reachable from any of the targets
-    all_reachable_from_any_target = set()
+    all_reaching_target = set()
 
     # Iterate over each target to accumulate reachable functions
     for target in targets:
         for function in functions_data:
-            if function.get("function_full_name") == target:
-                # Update the set with reachable functions for this target
-                reachable_from_current = set(
-                    function.get("all_reachable_from_functions", [])
-                )
-                all_reachable_from_any_target.update(reachable_from_current)
+            all_internal = set(function.get("internal_calls", []))
+            all_external = set(function.get("external_calls_functions", []))
+            all_calls = all_internal.union(all_external)
+            if target in all_calls:
+                all_reaching_target.add(function.get("function_full_name"))
 
     # Filter the functions_data to include only functions that are reachable from at least one of the targets
     filtered_functions = [
         function
         for function in functions_data
-        if function.get("function_full_name") in all_reachable_from_any_target
+        if function.get("function_full_name") in all_reaching_target
     ]
 
     return filtered_functions
@@ -679,6 +661,35 @@ def preprocess_scan_data_for_impact(scan_data, impact):
         if entry.get("impact") == impact:
             impact_matches[entry.get("full_name")] = True
     return impact_matches
+
+
+def _get_session_data(path):
+    """
+    Returns the session data from files/out/$network:address if it exists, otherwise returns None.
+    """
+    session_data_path = check_if_source_exists(path)
+    if session_data_path:
+        data = load_source(session_data_path)
+        return data
+    return None
+
+
+def sort_path(path):
+    # Check if target is a GitHub repository
+    if re.match(r"^https://github\.com/[^/]+/[^/]+/?$", path):
+        return "repo_target"
+    # Check if target is a GitHub file
+    elif re.match(r"^https://github\.com/[^/]+/[^/]+/blob/.*$", path):
+        return "file_target"
+    # Check if target is of the form network:address
+    elif ":" in path and not "/" in path:
+        return "network_target"
+    # Check if target is a directory /path/to/directory
+    elif os.path.isdir(path):
+        return "dir_target"
+    # Check if target is a URL containing a supported network
+    elif check_if_supported_network_in_url(path):
+        return "network_url_target"
 
 
 def get_function_description(main_contract, function_data):

@@ -16,10 +16,10 @@ from slither.printers.summary.constructor_calls import _get_source_code
 from slither.tools.possible_paths.possible_paths import find_target_paths
 from slither.utils.function import get_function_id
 
-from utils.utils import get_detectors, get_slitherin_detectors, run_all_detectors
+from utils.detectors import get_detectors, get_slitherin_detectors, run_all_detectors
 
 from prompt import PromptClass
-from property_match import PropertyMatchClass
+from property import PropertyMatchClass
 
 """ 
 python analyze.py files/out/mainet:0x1337/your_target_dir/TargetContract.sol --target_name TargetContractName  --config_dir files/out/mainet:0x1337
@@ -33,10 +33,9 @@ returns *_sessionData.json file in the files/out directory
 best to use full path for all arguments 
 """
 
+
 class AnalyticsClass:
-    def __init__(
-        self, target_compile: str, target_name: str, config_dir: str = None
-    ):
+    def __init__(self, target_compile: str, target_name: str, config_dir: str = None):
         self.name = target_name
 
         if config_dir:
@@ -53,7 +52,7 @@ class AnalyticsClass:
         except Exception as e:
             print("Error initializing Slither (AnalyticsClass.init):", e)
             raise e
-        
+
         self.property_check = PropertyMatchClass(self.slither)
         self.root_contract = None
         self.root_contract_path = None
@@ -107,7 +106,6 @@ class AnalyticsClass:
             }.values()
         )
 
-        # Returns all internal calls tree NOTE: can overshoot
         return "\n\n".join(
             _get_source_code(x).lstrip() for x in all_internal_calls if x
         )
@@ -154,7 +152,10 @@ class AnalyticsClass:
                 variable.source_mapping.lines[-1],
             ],
         }
+                
         self.output_variables.append(data)
+        
+        return data
 
     def analyze_function(self, function: Function, inherited=False):
         summary = function.get_summary()
@@ -261,11 +262,19 @@ class AnalyticsClass:
             ],
             "all_variables": [var.name for var in contract.state_variables],
             "all_function_names": [func.full_name for func in contract.functions],
-            "all_external_calls": [
+            "all_library_calls": list(set([
+                call[1].canonical_name
+                for call in contract.all_library_calls
+                if isinstance(call[1], Function)
+            ])),
+            "all_solidity_calls": list(set([
+                call.name for func in contract.functions for call in func.solidity_calls
+            ])),
+            "all_external_calls": list(set([
                 str(call)
                 for func in contract.functions
                 for call in func.external_calls_as_expressions
-            ],
+            ])),
             "all_reachable_from_functions": list(
                 set(
                     [
@@ -284,7 +293,7 @@ class AnalyticsClass:
         }
 
         self.output_contract = data
-
+        
         return data
 
     def run_slither_scan(self):
@@ -375,8 +384,6 @@ class AnalyticsClass:
         except json.JSONDecodeError as e:
             print(f"Failed to decode JSON output from Semgrep: {e}")
 
-    def run_ityfuzz_scan():
-        pass
 
     def run_analysis(self):
         for contract in self.slither.contracts:
@@ -452,7 +459,7 @@ class AnalyticsClass:
             "source_code": self.output_sources,
             "scan_results": self.output_scan,
         }
-
+        
         return self.output_full
 
     def load_target_contract(self, target_name: str):
@@ -484,6 +491,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "config_dir",
+        nargs='?',
         default="",
         help="Path to the directory containing the config file for solc, changes cwd(), only for cryticCompile",
     )
