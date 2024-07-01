@@ -77,7 +77,7 @@ def post_to_app(targets):
 
         timestamps.append(time.time())
 
-        payload = "path={}&api_key=".format(target)
+        payload = "path={}&param=".format(target)
         print("Executing payload:", payload)
 
         try:
