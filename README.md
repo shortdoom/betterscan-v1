@@ -2,7 +2,11 @@
 
 Betterscan is a security tool designed to parse, analyze, and display data from any EVM-based smart contracts. It provides a visual representation of the contract's source code and its dependencies. The tool allows you to search for specific functions, variables, and contracts while also finding intersections within all data. You can run automatic detectors on the target contract and filter the results based on impact and check type.
 
+Betterscan works with both individual contract addresses and lists of addresses. When list of addresses is provided, you'll be presented with a "protocol view" of all interconnected contracts.
+
 It's integrated with [immunefi-terminal](https://github.com/shortdoom/immunefi-terminal) to quickly download, parse, and browse potential bounty targets, or to just have a large dataset of contract source code to analyze.
+
+Read more here about one of the use cases for Betterscan:
 
 # Install & Run
 
@@ -20,11 +24,11 @@ Betterscan Dashboard is running on: `127.0.0.1:5000`
 
 Datasette Dashboard is running on `127.0.0.1:8001`
 
-It's a Python app! VanillaJS + AceEditor are stored inside of the repository, you do not need to run npm! The ugly side effect is github suggesting that's a Javascript app.
-
 # Features
 
 Out-of-the-box compilation of Etherscan explorers verified source code (multiple networks)
+
+Protocol view of interconnected contracts 
 
 Inspect details of contracts, functions, variables, internal and external calls, modifiers, expressions, low-level calls, inline assembly, and more
 
@@ -36,11 +40,12 @@ Set up custom prompts for your LLM-based audits
 
 # Demo
 
-![App navigation](/docs/navigation1.png)
-![Contract data](/docs/contract_data1.png)
-![Search functions](/docs/search_functions1.png)
-![Search detectors](/docs/search_detectors1.png)
-![Functions view](/docs/functions_view1.png)
+![App navigation](/docs/images/navigation1.png)
+![Protocol view](/docs/images/protocol_view.png)
+![Contract data](/docs/images/contract_data1.png)
+![Search functions](/docs/images/search_functions1.png)
+![Search detectors](/docs/images/search_detectors1.png)
+![Functions view](/docs/images/functions_view1.png)
 
 # Dashboard sections
 
@@ -52,19 +57,21 @@ Network:address input like: `mainnet:0x0000000000000000000000000000000000000000`
 
 URL input like: `https://etherscan.io/address/0x0000000000000000000000000000000000000000`
 
-Git repository like: `https://github.com/Project/repo` (requires Contract Name as an additional argument)
-
 Localhost directory path: `core/files/out/mainnet:0x0000000000000000000000000000000000000000` (experimental, compilations tend to fail)
 
 After successfully downloading the source and generating sessionData (AST), artifact targets become available to jump to from the dropdown. You can also clear unused data. LocalStorage has a 5MB limit.
 
 ### Contract Data
 
-Three types of data are displayed in this section:
+Four types of data are displayed in this section:
 
-Network Information, Contract Data, and State Variables.
+Protocol/Network view, Network Information, Contract Data, and State Variables.
 
 In V1, only State Variables allow jumping to definitions. Other types of information are just textual.
+
+### Protocol view
+
+When Betterscan is used with list of addresses as an argument while using the `runner.py` script (or, if enough of the contracts is provided manually through the interface) a protocol-view will be available on both main page and individual session page. Protocol view shows external calls connections between multiple separate contracts. 
 
 ### Search Functions
 
@@ -82,13 +89,6 @@ The Functions and Source Code display is where the results of your filtering are
 
 **Working directly with python files**
 
-`cd core` and `python app.py` to run the version of the app used locally (relies on `files/out` directory as a filesystem db).
+`python run.py` will start the application. To send POST request to the application the Flask server needs to be running.
 
-`cd datasette` and `python fetch_targets.py` to update the immunefi bounty database (and targets for mass scanning).
-
-`utils/targets_run.py` is a middleware between Datasette and core Flask app. It allows to POST *targets* extracted from datasette to the `app.py` from Python, without the UI.
-
-
-**Using with git clone directories**
-
-`git clone` or just download contracts that will compile for slither inside `files/out`. run `python analyze.py /path/to/repo TargetContractName`, if it's *foundry* a `/path/to/repo` path should be the root of a template directory, adjust accordingly for other directory structures. `*_sessionData.json` file will be saved to the root of `file/out`, move this file to earlier cloned repository, remember to name it as `sessionData.json`, pass `path/to/repo` as an arg in `127.0.0.1` Flask app.
+`python runner.py` allows to POST *targets* extracted from datasette or csv file to the `app.py` from Python without the UI. It's a useful feature for building protocol view. Go to the deployments page of your favorite protocol, copy addresses line-by-line into the .csv file and run `python runner.py --csv TARGETS.csv --crawl_level 0`. crawl_level argument will deep crawl every single contract on the list to discover contracts. Run with `crawl_level 1` if you are just interested in most immediate external contract dependencies.

@@ -18,7 +18,9 @@ click==8.1.7
 click-default-group==1.2.4
 click-option-group==0.5.6
 colorama==0.4.6
+contourpy==1.2.1
 crytic-compile @ git+https://github.com/crytic/crytic-compile.git@b5c538aaa66be44b7a68d9723881a7eba2c20898
+cycler==0.12.1
 cytoolz==0.12.2
 datasette==0.64.6
 datasette-query-history==0.2.3
@@ -36,6 +38,7 @@ evm-cfg-builder==0.3.1
 exceptiongroup==1.2.0
 face==22.0.0
 Flask==3.0.0
+fonttools==4.52.4
 frozenlist==1.4.0
 future==0.18.3
 gitdb==4.0.11
@@ -54,18 +57,22 @@ Jinja2==3.1.2
 jsonify==0.5
 jsonschema==4.19.0
 jsonschema-specifications==2023.7.1
+kiwisolver==1.4.5
 lru-dict==1.2.0
 lsprotocol==2023.0.1
 markdown-it-py==3.0.0
 MarkupSafe==2.1.3
+matplotlib==3.9.0
 mdurl==0.1.2
 mergedeep==1.3.4
 multidict==6.0.4
+networkx==3.3
 numpy==1.26.0
 packaging==23.1
 pandas==2.1.1
 parsimonious==0.9.0
 peewee==3.17.1
+pillow==10.3.0
 Pint==0.23
 pluggy==1.4.0
 prettytable==3.9.0
@@ -74,6 +81,8 @@ pycryptodome==3.19.0
 pyevmasm==0.2.3
 pygls==1.3.1
 Pygments==2.17.2
+pygraphviz==1.13
+pyparsing==3.1.2
 python-dateutil==2.8.2
 python-dotenv==1.0.1
 python-multipart==0.0.9
@@ -93,7 +102,7 @@ semgrep==1.61.1
 six==1.16.0
 slither-analyzer==0.10.2
 slither-lsp==0.0.1
-slitherin==0.6.0
+slitherin==0.7.0
 smmap==5.0.1
 sniffio==1.3.1
 solc-select==1.0.4

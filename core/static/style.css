@@ -23,7 +23,9 @@ body {
   ); /* silver with 50% opacity 192,192,192 */
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   display: block; /* Ensures default block layout for direct children */
-  font: 14px / normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Source Code Pro', 'source-code-pro', monospace
+  overflow: auto; /* Adjust to manage overflow from the SVG if it gets too large */
+  font: 14px / normal "Monaco", "Menlo", "Ubuntu Mono", "Consolas",
+    "Source Code Pro", "source-code-pro", monospace;
 }
 
 .header {
@@ -59,7 +61,7 @@ body {
     font-size: 14px;
   }
 
-  .function-content{
+  .function-content {
     padding: 8px;
     margin: 5px auto;
     max-width: 100%; /* Adjust for smaller screens */
@@ -87,8 +89,8 @@ body {
 }
 
 #functionDisplay {
-  position: sticky;  /* Make the div stick within its container */
-  top: 0;            /* Set the top of the div to stay at 0px from the top of the viewport when scrolling */
+  position: sticky; /* Make the div stick within its container */
+  top: 0; /* Set the top of the div to stay at 0px from the top of the viewport when scrolling */
   flex: 1;
   min-width: 0; /* Prevents flex items from overflowing */
   padding: 10px;
@@ -99,12 +101,13 @@ body {
   margin-top: 20px; /* Ensure there's space from the top of the viewport or any fixed element */
 }
 
-
 /* Style adjustments for the dropdown */
 select {
   padding: 10px;
   background-color: #fff;
   color: #333;
+  font: 14px / normal "Monaco", "Menlo", "Ubuntu Mono", "Consolas",
+    "Source Code Pro", "source-code-pro", monospace;
   /* font-size: 16px; */
 }
 
@@ -119,9 +122,10 @@ select {
 /* Styling for input and buttons */
 input[type="text"] {
   padding: 10px;
-  margin-bottom: 5px;
   color: #333;
   font-size: 16px;
+  font: 14px / normal "Monaco", "Menlo", "Ubuntu Mono", "Consolas",
+    "Source Code Pro", "source-code-pro", monospace;
 }
 
 button {
@@ -132,6 +136,8 @@ button {
   background-color: #fff;
   color: #333;
   font-size: 16px;
+  font: 14px / normal "Monaco", "Menlo", "Ubuntu Mono", "Consolas",
+    "Source Code Pro", "source-code-pro", monospace;
 }
 
 button:hover {
@@ -207,7 +213,8 @@ button:hover {
   text-align: left;
   outline: none;
   /* font-size: 16px; */
-  font: 12px / normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Source Code Pro', 'source-code-pro', monospace;
+  font: 12px / normal "Monaco", "Menlo", "Ubuntu Mono", "Consolas",
+    "Source Code Pro", "source-code-pro", monospace;
 }
 
 .collapsible:hover {
@@ -304,7 +311,6 @@ button:hover {
   overflow-x: auto; /* Add horizontal scroll for overflow */
 }
 
-
 .copy-button {
   padding: 8px;
   margin-left: 10px;
@@ -371,7 +377,6 @@ form label {
   white-space: nowrap; /* Prevents labels from wrapping */
 }
 
-
 .select-group {
   display: flex;
   flex-direction: column; /* Aligns the label above the select box */
@@ -423,7 +428,8 @@ form label {
   color: #000;
 }
 
-#searchForm button[type="button"] {
+#searchForm #resetSelectionsButton,
+#searchForm #filterDataButton {
   width: 100%;
   box-sizing: border-box; /* Ensures padding and border are included in the width */
 }
@@ -518,7 +524,7 @@ form label {
   margin-left: 10px;
 }
 
-#scanResultFilterForm label{
+#scanResultFilterForm label {
   font-weight: bold;
   letter-spacing: 2px;
   text-transform: lowercase;
@@ -651,8 +657,8 @@ form label {
 /* ================================ */
 
 #homepage {
-  background-color: rgba(0, 0, 0, 0.5); /* white with 50% opacity */
-  color: rgb(255, 255, 255);
+  /* background-color: rgba(0, 0, 0, 0.5); */
+  /* color: rgb(255, 255, 255); */
   font-family: "Courier New", Courier, monospace;
   padding: 20px;
   margin-top: 10px;
@@ -671,11 +677,17 @@ form label {
   display: flex;
   justify-content: space-between; /* This will keep the inputGroup and dropdownContainer apart */
   width: 100%; /* Ensure it spans the entire width of its parent */
+  margin-bottom: 5px;
 }
 
 #inputGroup {
   display: flex;
   gap: 10px; /* Adds a small gap between the input and the button */
+}
+
+::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+  color: inherit;
+  opacity: 1; /* Firefox */
 }
 
 #dropdownContainer {
@@ -695,4 +707,42 @@ form label {
   justify-content: flex-end;
   margin-bottom: 5px;
   gap: 5px;
+}
+
+/* ================================ */
+/* Styles for the protocol view     */
+/* ================================ */
+
+.network-svg {
+  display: block;
+  max-width: 100%;
+  height: auto; 
+  border-radius: 4px;
+  margin: 0 auto;
+  margin-top: 30px;
+  background-color: #ffffffa6;
+}
+
+.tooltip {
+  /* pointer-events: none; */
+  opacity: 0.9;
+  font-size: 12px;
+  color: #333;
+}
+
+.component {
+  margin-bottom: 20px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.component h3 {
+  margin-top: 0;
+}
+
+pre {
+  background-color: #f4f4f4;
+  border: 1px solid #ddd;
+  padding: 5px;
 }
