@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <link rel="stylesheet" href="/static/default.min.css" />
+    <script src="/static/js/d3/d3.v7.js"></script>
+    <script type="module" src="/static/js/components/protocol_page.js"></script>
+  </head>
+  <body>
+    <div class="header" onclick="window.location.href='/'">
+      <h1>┗┫⦀⦙ｂｅｔｔｅｒｓｃａｎ⦙⦀┣┛</h1>
+    </div>
+    <div id="dashboard">
+      <h1>Detailed protocol network analysis</h1>
+      <div id="dropdownContainer"></div>
+      <div id="protocolDisplay"></div>
+      <div id="protocolAnalysis"></div>
+    </div>
+    <script>
+    </script>
+  </body>
+</html>

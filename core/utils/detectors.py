@@ -1,4 +1,6 @@
 import inspect
+import subprocess
+import json
 from slither.slither import Slither
 from slither.detectors import all_detectors
 from typing import List, Tuple, Type
@@ -36,6 +38,7 @@ def get_detectors() -> Tuple[List[Type[AbstractDetector]]]:
 
 def get_slitherin_detectors() -> List[Dict]:
     return slitherin.plugin_detectors
+
 
 # NOTE: Removed printers because of some deep down the stack errors
 def run_all_detectors(
