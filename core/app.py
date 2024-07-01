@@ -6,6 +6,7 @@ from downloader import DownloaderClass
 from netmap import ContractMap
 from netmap import ContractMapScan
 import networkx as nx
+from itertools import combinations
 from web3 import Web3
 import re
 import shutil
@@ -268,8 +269,8 @@ def protocol_view():
             scc_ids.update(component)
             scc_sizes.append(len(component))  # Collect sizes for printing later
 
-    # Count only nodes classified as 'core' and 'periphery'
     all_nodes = contract_map_scan.graph.nodes()
+    isolates = list(nx.isolates(contract_map_scan.graph))
     core_nodes_count = sum(
         1
         for node in contract_map_scan.graph.nodes()
@@ -280,18 +281,22 @@ def protocol_view():
         for node in contract_map_scan.graph.nodes()
         if core_periphery_map[node] == "periphery"
     )
-
-    # Extract centrality values for core nodes
-    # Extract centrality values and corresponding labels for core nodes
     core_node_centralities = {
         node: centrality
         for node, centrality in degree_centrality.items()
         if core_periphery_map[node] == "core"
     }
+    clustering_coeff = nx.average_clustering(nx.Graph(contract_map_scan.graph))
 
     if core_node_centralities:
         max_node = max(core_node_centralities, key=core_node_centralities.get)
         min_node = min(core_node_centralities, key=core_node_centralities.get)
+        cores_clustering = {
+            node: nx.clustering(nx.Graph(contract_map_scan.graph), node)
+            for node in core_node_centralities
+            if nx.clustering(nx.Graph(contract_map_scan.graph), node) > 0
+        }
+
         print(
             f"Node with highest connectivity value: {max_node} (Centrality: {core_node_centralities[max_node]})"
         )
@@ -301,23 +306,21 @@ def protocol_view():
     else:
         print("No core nodes identified based on the threshold.")
 
-    # TODO: Total connectivity analysis
-    
+    print(f"Clustering coeff: {clustering_coeff}")
+    print(f"Cores coeff: {cores_clustering}")
     print(f"Sum of all nodes: {len(all_nodes)}")
+    print(f"Sum of all isolates: {len(isolates)}")
     print(f"Sum of core nodes: {core_nodes_count}")
     print(f"Sum of periphery nodes: {periphery_nodes_count}")
     print(f"Cluster count: {len(scc_sizes)}")
+    
     for size in sorted(scc_sizes, reverse=True):
         print(f"Cluster Size: {size}")
 
     for node in protocol_data["nodes"]:
-        node["core_periphery"] = core_periphery_map.get(node["id"], "periphery")
         node_id = node["id"]
+        node["core_periphery"] = core_periphery_map.get(node["id"])
         node["scc_active"] = node_id in scc_ids
-        node["k_core"] = node_id in k_core
-        node["k_crust"] = node_id in k_crust
-        node["k_shell"] = node_id in k_shell
-        node["k_corona"] = node_id in k_corona
 
     return jsonify(protocol_data)
 
