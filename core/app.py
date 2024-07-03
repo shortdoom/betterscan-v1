@@ -240,14 +240,14 @@ def protocol_view():
     crawl_level = int(0)
     contract_map_scan = ContractMapScan(crawl_level)
     contract_map_scan.gen_protocol_graph()
+
+    node_to_exclude = "0x0000000000000000000000000000000000000000"
+    if node_to_exclude in contract_map_scan.graph:
+        print("Excluding!!!!")
+        contract_map_scan.graph.remove_node(node_to_exclude)
+    
     protocol_data = nx.node_link_data(contract_map_scan.graph)
-
-    # Compute k-core related structures
-    k_core = nx.k_core(contract_map_scan.graph)
-    k_crust = nx.k_crust(contract_map_scan.graph)
-    k_shell = nx.k_shell(contract_map_scan.graph)
-    k_corona = nx.k_corona(contract_map_scan.graph, k=1)
-
+    
     # Calculate degree centrality for each node
     degree_centrality = nx.degree_centrality(contract_map_scan.graph)
 
@@ -263,13 +263,19 @@ def protocol_view():
     # Analyze strongly connected components that have links
     scc_ids = set()
     scc_sizes = []
+    cluster_strength = 0
     for component in nx.strongly_connected_components(contract_map_scan.graph):
         subgraph = contract_map_scan.graph.subgraph(component)
         if subgraph.size() > 0:  # Check if the subgraph has links
             scc_ids.update(component)
             scc_sizes.append(len(component))  # Collect sizes for printing later
+            # Calculate the density of the subgraph
+            density = nx.density(subgraph)
+            # Add the product of the size and density to the cluster strength
+            cluster_strength += len(component) * density
 
     all_nodes = contract_map_scan.graph.nodes()
+    all_edges = contract_map_scan.graph.edges()
     isolates = list(nx.isolates(contract_map_scan.graph))
     core_nodes_count = sum(
         1
@@ -286,7 +292,16 @@ def protocol_view():
         for node, centrality in degree_centrality.items()
         if core_periphery_map[node] == "core"
     }
-    clustering_coeff = nx.average_clustering(nx.Graph(contract_map_scan.graph))
+
+    perifery_node_centralities = {
+        node: centrality
+        for node, centrality in degree_centrality.items()
+        if core_periphery_map[node] == "periphery"
+    }
+
+    clustering_coeff = nx.average_clustering(
+        nx.Graph(contract_map_scan.graph, count_zeros=False)
+    )
 
     if core_node_centralities:
         max_node = max(core_node_centralities, key=core_node_centralities.get)
@@ -296,24 +311,59 @@ def protocol_view():
             for node in core_node_centralities
             if nx.clustering(nx.Graph(contract_map_scan.graph), node) > 0
         }
+        max_node_label = contract_map_scan.graph.nodes[max_node]["label"]
+        min_node_label = contract_map_scan.graph.nodes[min_node]["label"]
 
         print(
-            f"Node with highest connectivity value: {max_node} (Centrality: {core_node_centralities[max_node]})"
+            f"Core Node with highest connectivity value: {max_node_label}:{max_node} (Centrality: {core_node_centralities[max_node]})"
         )
         print(
-            f"Node with smallest connectivity value: {min_node} (Centrality: {core_node_centralities[min_node]})"
+            f"Core Node with smallest connectivity value: {min_node_label}:{min_node} (Centrality: {core_node_centralities[min_node]})"
         )
     else:
         print("No core nodes identified based on the threshold.")
 
+    if perifery_node_centralities:
+        max_pnode = max(perifery_node_centralities, key=perifery_node_centralities.get)
+        max_pnode_label = contract_map_scan.graph.nodes[max_pnode]["label"]
+        
+        # Filter out items with zero value
+        non_zero_centralities = {
+            node: centrality
+            for node, centrality in perifery_node_centralities.items()
+            if centrality > 0
+        }
+        # Find the minimum non-zero value
+        if non_zero_centralities:
+            min_pnode = min(non_zero_centralities, key=non_zero_centralities.get)
+            min_pnode_label = contract_map_scan.graph.nodes[min_pnode]["label"]
+        else:
+            min_pnode = 0
+            min_pnode_label = contract_map_scan.graph.nodes[min_pnode]["label"]
+        
+        print(
+            f"Periphery Node with highest connectivity value: {max_pnode_label}:{max_pnode} (Centrality: {perifery_node_centralities[max_pnode]})"
+        )
+        print(
+            f"Periphery Node with smallest connectivity value: {min_pnode_label}:{min_pnode} (Centrality: {perifery_node_centralities[min_pnode]})"
+        )
+
     print(f"Clustering coeff: {clustering_coeff}")
     print(f"Cores coeff: {cores_clustering}")
+    print(f"Threshold: {threshold}")
+    print(f"Avarage degree: {np.mean(list(degree_centrality.values()))}")
+    print(f"Max degree: {max(list(degree_centrality.values()))}")
+    print(
+        f"Min degree: {min(value for value in degree_centrality.values() if value > 0)}"
+    )
     print(f"Sum of all nodes: {len(all_nodes)}")
+    print(f"Sum of all edges: {len(all_edges)}")
     print(f"Sum of all isolates: {len(isolates)}")
     print(f"Sum of core nodes: {core_nodes_count}")
     print(f"Sum of periphery nodes: {periphery_nodes_count}")
     print(f"Cluster count: {len(scc_sizes)}")
-    
+    print(f"Cluster strength: {cluster_strength}")
+
     for size in sorted(scc_sizes, reverse=True):
         print(f"Cluster Size: {size}")
 
