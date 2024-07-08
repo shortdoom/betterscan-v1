@@ -231,10 +231,6 @@ export function createProtocolMap(target_div = "#dashboard") {
 
 function displayStatistics(svg, stats, width) {
   const statsData = [
-    { key: "threshold", value: stats.threshold, label: "Threshold" },
-    { key: "average_degree", value: stats.average_degree, label: "Avg Degree" },
-    { key: "max_degree", value: stats.max_degree, label: "Max Degree" },
-    { key: "min_degree", value: stats.min_degree, label: "Min Degree" },
     {
       key: "sum_of_all_nodes",
       value: stats.sum_of_all_nodes,
@@ -245,7 +241,6 @@ function displayStatistics(svg, stats, width) {
       value: stats.sum_of_all_edges,
       label: "Total Edges",
     },
-    { key: "sum_of_isolates", value: stats.sum_of_isolates, label: "Isolates" },
     {
       key: "sum_of_core_nodes",
       value: stats.sum_of_core_nodes,
@@ -256,7 +251,9 @@ function displayStatistics(svg, stats, width) {
       value: stats.sum_of_periphery_nodes,
       label: "Periphery Nodes",
     },
+    { key: "sum_of_isolates", value: stats.sum_of_isolates, label: "Isolates" },
     { key: "cluster_count", value: stats.cluster_count, label: "Clusters" },
+    { key: "average_degree", value: stats.average_degree, label: "Average Centrality" },
     {
       key: "average_core_centrality",
       value: stats.average_core_centrality,
@@ -267,25 +264,28 @@ function displayStatistics(svg, stats, width) {
       value: stats.average_periphery_centrality,
       label: "Periphery Centrality Avg",
     },
+    { key: "threshold", value: stats.threshold, label: "Threshold" },
+    { key: "max_degree", value: stats.max_degree, label: "Max Degree" },
+    { key: "min_degree", value: stats.min_degree, label: "Min Degree" },
     {
       key: "max_core_node_label",
       value: stats.max_core_node_label,
-      label: "Max Core Node Label",
+      label: "Max Core Node",
     },
     {
       key: "max_periphery_node_label",
       value: stats.max_periphery_node_label,
-      label: "Max Periphery Node Label",
+      label: "Max Periphery Node",
     },
     {
       key: "min_core_node_label",
       value: stats.min_core_node_label,
-      label: "Min Core Node Label",
+      label: "Min Core Node",
     },
     {
       key: "min_periphery_node_label",
       value: stats.min_periphery_node_label,
-      label: "Min Periphery Node Label",
+      label: "Min Periphery Node",
     },
   ];
 
@@ -306,7 +306,7 @@ function displayStatistics(svg, stats, width) {
       (d) =>
         `${d.label}: ${
           typeof d.value === "number"
-            ? Math.floor(d.value * 100) / 100
+            ? Math.floor(d.value * 100000000) / 100000000
             : d.value
         }`
     )
