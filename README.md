@@ -6,7 +6,7 @@ Betterscan works with both individual contract addresses and lists of addresses.
 
 It's integrated with [immunefi-terminal](https://github.com/shortdoom/immunefi-terminal) to quickly download, parse, and browse potential bounty targets, or to just have a large dataset of contract source code to analyze.
 
-Read more here about one of the use cases for Betterscan:
+Usage example: [Using Betterscan for Defining Smart Contracts Protocol Complexity](https://shortdoom.github.io/betterscan/code-complexity-in-smart-contracts-protocol-part1.html)
 
 # Install & Run
 
@@ -28,7 +28,7 @@ Datasette Dashboard is running on `127.0.0.1:8001`
 
 Out-of-the-box compilation of Etherscan explorers verified source code (multiple networks)
 
-Protocol view of interconnected contracts 
+Protocol view of interconnected contracts. Automatic Etherscan scraper.
 
 Inspect details of contracts, functions, variables, internal and external calls, modifiers, expressions, low-level calls, inline assembly, and more
 

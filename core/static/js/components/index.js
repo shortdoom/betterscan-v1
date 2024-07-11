@@ -35,12 +35,12 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   document.getElementById("loadDataButton").addEventListener("click", loadData);
-  document
-  .getElementById("protocolViewButton")
-  .addEventListener(
-    "click",
-    () => (window.location.href = "protocol_view.html")
-  );
+  // document
+  // .getElementById("protocolViewButton")
+  // .addEventListener(
+  //   "click",
+  //   () => (window.location.href = "protocol_view.html")
+  // );
   
 });
 

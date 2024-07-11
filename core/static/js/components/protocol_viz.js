@@ -12,6 +12,7 @@ export function createProtocolMap(target_div = "#dashboard") {
     .then((data) => {
       const nodes = data.nodes;
       const links = data.links;
+      const stats = data.statistics;
 
       const connectedNodeIds = new Set(
         links.flatMap((link) => [link.source, link.target])
@@ -52,6 +53,9 @@ export function createProtocolMap(target_div = "#dashboard") {
         .attr("opacity", 0.7)
         .attr("font-size", 16);
 
+      // Display selected top marked statistics
+      displayStatistics(svg, stats, width);
+
       const toggleGroup = svg
         .append("g")
         .attr("class", "toggle-button")
@@ -84,13 +88,14 @@ export function createProtocolMap(target_div = "#dashboard") {
             .forceLink(links)
             .id((d) => d.id)
             .distance(150)
+            .strength(1) 
         )
-        .force("charge", d3.forceManyBody().strength(-500))
+        .force("charge", d3.forceManyBody().strength(-250))
         .force("center", d3.forceCenter(width / 2, height / 2))
         .force(
           "radial",
           d3
-            .forceRadial((d) => (d.connected ? 0 : 150), width / 2, height / 2)
+            .forceRadial((d) => (d.connected ? 0 : 50), width / 2, height / 2)
             .strength((d) => (d.connected ? 0 : 0.1))
         );
 
@@ -223,6 +228,91 @@ export function createProtocolMap(target_div = "#dashboard") {
     .catch(function (error) {
       console.error("Error fetching data:", error);
     });
+}
+
+function displayStatistics(svg, stats, width) {
+  const statsData = [
+    {
+      key: "sum_of_all_nodes",
+      value: stats.sum_of_all_nodes,
+      label: "Total Nodes",
+    },
+    {
+      key: "sum_of_all_edges",
+      value: stats.sum_of_all_edges,
+      label: "Total Edges",
+    },
+    {
+      key: "sum_of_core_nodes",
+      value: stats.sum_of_core_nodes,
+      label: "Core Nodes",
+    },
+    {
+      key: "sum_of_periphery_nodes",
+      value: stats.sum_of_periphery_nodes,
+      label: "Periphery Nodes",
+    },
+    { key: "sum_of_isolates", value: stats.sum_of_isolates, label: "Isolates" },
+    { key: "cluster_count", value: stats.cluster_count, label: "Clusters" },
+    { key: "average_degree", value: stats.average_degree, label: "Average Centrality" },
+    {
+      key: "average_core_centrality",
+      value: stats.average_core_centrality,
+      label: "Core Centrality Avg",
+    },
+    {
+      key: "average_periphery_centrality",
+      value: stats.average_periphery_centrality,
+      label: "Periphery Centrality Avg",
+    },
+    { key: "threshold", value: stats.threshold, label: "Threshold" },
+    { key: "max_degree", value: stats.max_degree, label: "Max Degree" },
+    { key: "min_degree", value: stats.min_degree, label: "Min Degree" },
+    {
+      key: "max_core_node_label",
+      value: stats.max_core_node_label,
+      label: "Max Core Node",
+    },
+    {
+      key: "max_periphery_node_label",
+      value: stats.max_periphery_node_label,
+      label: "Max Periphery Node",
+    },
+    {
+      key: "min_core_node_label",
+      value: stats.min_core_node_label,
+      label: "Min Core Node",
+    },
+    {
+      key: "min_periphery_node_label",
+      value: stats.min_periphery_node_label,
+      label: "Min Periphery Node",
+    },
+  ];
+
+  const statsGroup = svg
+    .append("g")
+    .attr("class", "stats-group")
+    .attr("transform", "translate(10, 60)");
+
+  statsGroup
+    .selectAll("text.stats")
+    .data(statsData)
+    .enter()
+    .append("text")
+    .attr("x", 0)
+    .attr("y", (d, i) => i * 20)
+    // Displaying the statistics in the format "label: value"
+    .text(
+      (d) =>
+        `${d.label}: ${
+          typeof d.value === "number"
+            ? Math.floor(d.value * 100000000) / 100000000
+            : d.value
+        }`
+    )
+    .attr("font-family", "monospace")
+    .attr("font-size", 12);
 }
 
 export function createProtocolAnalysis(target_div = "#protocolAnalysis") {
