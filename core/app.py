@@ -411,6 +411,7 @@ def protocol_view():
     
     print("protocol_data[nodes]:")
     for node in nodes:
+        print("Node:", node["id"])
         for key, value in node.items():
             print(f"  {key}: {value}")
 

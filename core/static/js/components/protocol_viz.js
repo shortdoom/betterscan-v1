@@ -88,13 +88,14 @@ export function createProtocolMap(target_div = "#dashboard") {
             .forceLink(links)
             .id((d) => d.id)
             .distance(150)
+            .strength(1) 
         )
-        .force("charge", d3.forceManyBody().strength(-500))
+        .force("charge", d3.forceManyBody().strength(-250))
         .force("center", d3.forceCenter(width / 2, height / 2))
         .force(
           "radial",
           d3
-            .forceRadial((d) => (d.connected ? 0 : 150), width / 2, height / 2)
+            .forceRadial((d) => (d.connected ? 0 : 50), width / 2, height / 2)
             .strength((d) => (d.connected ? 0 : 0.1))
         );
 
