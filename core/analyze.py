@@ -206,7 +206,7 @@ class AnalyticsClass:
             "expressions": [var.source_mapping.content for var in function.expressions],
             "is_shadowed": function.is_shadowed,
             "shadows": function.shadows,
-            "function_type": function.function_type.value,
+            "function_type": function.function_type.value if function.function_type else None,
             "is_protected": function._is_protected,
             "has_documentation": function.has_documentation,
             "low_level_calls": self.get_low_level_calls(function),

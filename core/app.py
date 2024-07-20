@@ -249,7 +249,12 @@ def protocol_view():
     in_degree_centrality = nx.in_degree_centrality(contract_map_scan.graph)
     out_degree_centrality = nx.out_degree_centrality(contract_map_scan.graph)
 
-    threshold = np.percentile(list(degree_centrality.values()), 75)
+    degree_values = list(degree_centrality.values())
+
+    if degree_values:
+        threshold = np.percentile(degree_values, 75)
+    else:
+        threshold = 0
 
     core_periphery_map = {
         node: "core" if centrality > threshold else "periphery"
@@ -345,11 +350,11 @@ def protocol_view():
     protocol_data["statistics"] = {
         "network_size_metric": network_size_metric,
         "threshold": threshold,
-        "average_degree": np.mean(list(degree_centrality.values())),
-        "average_in_degree": np.mean(list(in_degree_centrality.values())),
-        "average_out_degree": np.mean(list(out_degree_centrality.values())),
-        "max_degree": max(list(degree_centrality.values())),
-        "min_degree": min(value for value in degree_centrality.values() if value > 0),
+        "average_degree": np.mean(degree_values) if degree_values else 0,
+        "average_in_degree": np.mean(list(in_degree_centrality.values())) if in_degree_centrality else 0,
+        "average_out_degree": np.mean(list(out_degree_centrality.values())) if out_degree_centrality else 0,
+        "max_degree": max(degree_values) if degree_values else 0,
+        "min_degree": min((value for value in degree_values if value > 0), default=0),
         "sum_of_all_nodes": num_nodes,
         "sum_of_all_edges": num_edges,
         "sum_of_isolates": len(isolates),
@@ -408,7 +413,7 @@ def protocol_view():
     print("protocol_data[statistics]:")
     for key, value in stats.items():
         print(f"  {key}: {value}")
-    
+
     print("protocol_data[nodes]:")
     for node in nodes:
         print("Node:", node["id"])
@@ -416,6 +421,7 @@ def protocol_view():
             print(f"  {key}: {value}")
 
     return jsonify(protocol_data)
+
 
 
 @app.route("/protocol_view.html")
